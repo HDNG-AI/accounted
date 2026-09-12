@@ -207,5 +207,21 @@ export const EXTENSION_DEFINITIONS: Record<string, ExtensionDefinition[]> = {
           "hasOwnData": true,
           "subscriptionNotice": "Kräver ett Google-konto. Varje brevlåda kopplas av sin egen ägare och kan kopplas från när som helst."
     },
+    {
+          "slug": "upper-hand",
+          "name": "Upper Hand",
+          "sector": "general",
+          "category": "reports",
+          "icon": "ShieldCheck",
+          "dataPattern": "core",
+          "description": "Läsgranskare som går igenom böckerna först: ärenden med beviskedja, ansvarig och verifierad stängning",
+          "longDescription": "Revisorn, banken, Skatteverket och köparen har alltid övertaget. Upper Hand släpper in dem i böckerna först, som läsande granskare. Varje ärende bär sin beviskedja och ett namn och datum för vad som stänger det. Ett ärende stängs aldrig med ett klick: det stängs när rätt sak gjorts i bokföringen och en omkörning bekräftar det, eller efter ett uttryckligt beslut med not.",
+          "readsCoreTables": [
+                "journal_entries",
+                "journal_entry_lines",
+                "document_attachments"
+          ],
+          "hasOwnData": true
+    },
   ],
 }

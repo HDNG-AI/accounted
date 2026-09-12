@@ -1,14 +1,15 @@
 <meta charset="utf-8">
 <title>Upper Hand</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Hedvig+Letters+Serif:opsz@12..24&display=swap">
 <style>
 :root{
-  --ink:hsl(0 0% 4%);--paper:hsl(60 33% 97%);--white:hsl(0 0% 100%);--accent:hsl(73 100% 65%);
+  --ink:hsl(0 0% 4%);--paper:hsl(60 33% 97%);--white:hsl(0 0% 100%);--accent:hsl(73 100% 65%);--on-accent:hsl(0 0% 4%);
   --mute:hsl(0 0% 33%);--border:hsl(60 10% 85%);--s2:hsl(60 20% 93%);--s3:hsl(60 15% 90%);
   --ok:hsl(152 55% 34%);--warn:hsl(38 92% 45%);--err:hsl(0 72% 51%);
   --hair:color-mix(in srgb,var(--ink) 14%,transparent);
-  --sans:"Poppins",system-ui,sans-serif;--mono:"DejaVu Sans Mono","SF Mono",Menlo,Consolas,monospace;
+  --sans:"Geist",system-ui,sans-serif;--display:"Hedvig Letters Serif",Georgia,serif;--mono:"DejaVu Sans Mono","SF Mono",Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --ink:hsl(60 33% 97%);--paper:hsl(0 0% 4%);--white:hsl(0 0% 6%);--mute:hsl(0 0% 55%);
@@ -124,6 +125,122 @@ table.ev td.num{text-align:right;font-family:var(--mono);font-variant-numeric:ta
 .strip .v{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink);font-size:13px}
 @media (max-width:980px){.strip{grid-template-columns:repeat(2,1fr)}}
 .note{font-size:12px;color:var(--mute);margin:0}
+
+/* lifecycle */
+.chip{display:inline-flex;align-items:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;padding:2px 9px;border:1.5px solid var(--hair);border-radius:999px;white-space:nowrap;color:var(--mute)}
+.chip.ack{border-color:var(--warn);color:var(--warn)}
+.chip.closed{border-color:var(--ok);color:var(--ok)}
+.actions{border:2px solid var(--ink);background:var(--s2);padding:14px 16px;display:grid;gap:12px}
+.actions .row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+.actions label{display:grid;gap:4px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.actions input[type=text],.actions input[type=date],.actions textarea{font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--white);border:1.5px solid var(--ink);padding:7px 9px;border-radius:0;width:100%}
+.actions textarea{min-height:64px;resize:vertical}
+.actions .checks{display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--mute);line-height:1.45}
+.actions .checks input{margin-top:2px;flex:none}
+.btn{font-family:var(--sans);font-size:12px;font-weight:600;letter-spacing:.04em;padding:8px 14px;border:1.5px solid var(--ink);background:var(--white);color:var(--ink);cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn.primary{background:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{background:var(--accent);color:var(--on-accent);filter:brightness(.9)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btnline{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.result{font-size:12px;color:var(--ink);border-left:3px solid var(--accent);padding:7px 11px;background:var(--white);line-height:1.5}
+.result.err{border-left-color:var(--err)}
+.result.ok{border-left-color:var(--ok)}
+.history{display:grid;gap:8px;margin-top:6px}
+.history .h{display:grid;grid-template-columns:64px 1fr;gap:10px;font-size:12px;border-top:1px solid var(--hair);padding-top:8px}
+.history .h:first-child{border-top:0;padding-top:0}
+.history .when{font-family:var(--mono);color:var(--mute)}
+.history .what b{color:var(--ink);font-weight:600}
+.history .what span{color:var(--mute);display:block}
+.closedgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1px;background:var(--ink);border:2px solid var(--ink)}
+.closedgrid .cl{background:var(--white);padding:14px 16px;display:grid;gap:6px;font-size:13px;color:var(--mute);align-content:start}
+.closedgrid .cl b{color:var(--ink)}
+.closedgrid .cl .num{font-family:var(--mono);font-size:11px}
+.spin{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);border:1.5px solid var(--ink);margin-right:7px;animation:beat 1s ease-in-out infinite;vertical-align:middle}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+@media (max-width:640px){.actions .row{grid-template-columns:1fr}}
+
+/* accounted.se theme overrides */
+:root{
+  --frame:hsl(40 18% 96%);
+  --ink:hsl(0 0% 9%);--paper:hsl(0 0% 100%);--white:hsl(0 0% 100%);
+  --accent:hsl(0 0% 9%);--on-accent:hsl(0 0% 100%);
+  --mute:hsl(0 0% 40%);--border:hsl(45 5% 85%);--s2:hsl(40 11% 89%);--s3:hsl(40 8% 93%);
+  --ok:hsl(155 25% 40%);--warn:hsl(38 55% 50%);--err:hsl(6 36% 48%);
+  --hair:hsl(45 5% 85%);
+  --sans:"Geist",system-ui,-apple-system,sans-serif;
+  --display:"Hedvig Letters Serif",Georgia,serif;
+  --num:"Geist",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --frame:hsl(0 0% 5%);
+  --ink:hsl(0 0% 87%);--paper:hsl(0 0% 7%);--white:hsl(0 0% 11%);
+  --accent:hsl(0 0% 87%);--on-accent:hsl(0 0% 7%);
+  --mute:hsl(0 0% 50%);--border:hsl(45 4% 18%);--s2:hsl(0 0% 14%);--s3:hsl(0 0% 16%);
+  --ok:hsl(155 22% 48%);--warn:hsl(38 50% 55%);--err:hsl(6 32% 56%);
+  --hair:hsl(45 4% 18%);
+}}
+:root[data-theme="dark"]{
+  --frame:hsl(0 0% 5%);
+  --ink:hsl(0 0% 87%);--paper:hsl(0 0% 7%);--white:hsl(0 0% 11%);
+  --accent:hsl(0 0% 87%);--on-accent:hsl(0 0% 7%);
+  --mute:hsl(0 0% 50%);--border:hsl(45 4% 18%);--s2:hsl(0 0% 14%);--s3:hsl(0 0% 16%);
+  --ok:hsl(155 22% 48%);--warn:hsl(38 50% 55%);--err:hsl(6 32% 56%);
+  --hair:hsl(45 4% 18%);
+}
+body{background:var(--frame);font-family:var(--sans)}
+.wrap{background:var(--paper);border:1px solid var(--border);border-radius:12px;margin:12px auto;padding:32px;gap:32px}
+.top{border-bottom:1px solid var(--border);padding-bottom:24px}
+.top h1{font-family:var(--display);font-weight:400;font-size:24px;line-height:32px;letter-spacing:-.02em}
+.top .sub{color:var(--mute)}
+.live .v,.counters .v,.tile .big,td.num,.num,.live .v{font-family:var(--num);font-variant-numeric:tabular-nums}
+.dot.live{background:var(--ink);box-shadow:0 0 0 2px color-mix(in srgb,var(--ink) 18%,transparent)}
+.band{background:none;border:0;gap:16px}
+.tile{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:24px}
+.tile .big{font-weight:600;letter-spacing:-.02em}
+.tile .foot{border-top:1px solid var(--border)}
+section h2{font-family:var(--display);font-weight:400;font-size:18px;letter-spacing:-.01em}
+.work{border:1px solid var(--border);border-radius:8px;background:var(--white);overflow:hidden}
+.counters{border-bottom:1px solid var(--border);background:var(--border)}
+.counters div{background:var(--s3)}
+.log{font-family:var(--sans)}
+.log .row{border-top:1px solid var(--border)}
+.guard{border-top:1px solid var(--border);background:var(--s2)}
+table.uh{border:0}
+table.uh thead th{background:transparent;border-bottom:1px solid var(--border);color:var(--mute);font-weight:500}
+table.uh tbody td{border-top:1px solid var(--border)}
+table.uh tbody tr:hover td{background:color-mix(in srgb,var(--s2) 55%,transparent)}
+table.uh tbody tr[aria-selected="true"] td{background:var(--s3)}
+table.uh tbody tr[aria-selected="true"] td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+table.uh td.num,table.uh th.num{font-family:var(--num);font-variant-numeric:tabular-nums}
+.drawer{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--white)}
+.drawer .main{border-right:1px solid var(--border)}
+.drawer h3{font-family:var(--display);font-weight:400}
+.drawer aside{background:var(--s3)}
+table.ev{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+table.ev th{background:var(--s2);border-bottom:1px solid var(--border)}
+table.ev td{border-top:1px solid var(--border)}
+table.ev td:first-child{font-family:var(--mono)}
+.cleared,.strip,.closedgrid{border:0;background:none;gap:16px}
+.cleared div,.strip div,.closedgrid .cl{background:var(--white);border:1px solid var(--border);border-radius:8px}
+.strip div{background:var(--s3)}
+.actions{border:1px solid var(--border);border-radius:8px;background:var(--s3)}
+.actions input[type=text],.actions input[type=date],.actions textarea{border:1px solid var(--border);border-radius:8px;background:var(--white)}
+.btn{border:1px solid var(--border);border-radius:999px;background:var(--white);color:var(--ink);padding:7px 16px;font-size:13px;font-weight:500}
+.btn:hover{background:var(--s2);color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent);color:var(--on-accent);filter:none;opacity:.88}
+.result{border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;background:var(--white)}
+.result.err{border-left-color:var(--err)}
+.result.ok{border-left-color:var(--ok)}
+.chip{border:1px solid var(--border);border-radius:999px;padding:2px 10px}
+.chip.open{background:transparent;border:0;color:var(--mute);padding-left:0}
+.chip.ack{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,var(--border));background:color-mix(in srgb,var(--warn) 12%,transparent)}
+.chip.accepted{border-color:var(--border);background:var(--s2);color:var(--mute)}
+.chip.closed{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 45%,var(--border));background:color-mix(in srgb,var(--ok) 12%,transparent)}
+.spin{background:var(--ink);border-color:var(--paper)}
+.history .h{border-top:1px solid var(--border)}
+.history .when{font-family:var(--mono)}
 </style>
 
 <div class="wrap">
@@ -146,9 +263,9 @@ table.ev td.num{text-align:right;font-family:var(--mono);font-variant-numeric:ta
     <div class="band">
       <div class="tile">
         <span class="lbl">Revisionsredo</span>
-        <div class="big">64<small>/100</small></div>
-        <div class="meta"><span><span class="dot err"></span><b>1</b> blockerande</span><span><span class="dot warn"></span><b>4</b> kräver åtgärd</span><span><span class="dot info"></span><b>2</b> info</span></div>
-        <div class="foot">Viktad på allvar och underlag. Stiger till 79 när momsskulden på 2650 är avstämd mot inlämnade deklarationer.</div>
+        <div class="big"><span id="auditScore">64</span><small>/100</small></div>
+        <div class="meta"><span><span class="dot err"></span><b id="cBlocking">1</b> blockerande</span><span><span class="dot warn"></span><b id="cAttention">4</b> kräver åtgärd</span><span><span class="dot info"></span><b id="cInfo">2</b> info</span></div>
+        <div class="foot" id="auditFoot">Viktad på allvar och underlag. Stiger till 79 när momsskulden på 2650 är avstämd mot inlämnade deklarationer.</div>
       </div>
       <div class="tile">
         <span class="lbl">Försäljningsredo</span>
@@ -189,18 +306,10 @@ table.ev td.num{text-align:right;font-family:var(--mono);font-variant-numeric:ta
       <div class="tblwrap">
       <table class="uh" id="cases">
         <thead><tr><th>Roll</th><th>Allvar</th><th>Fynd</th><th class="num">Belopp</th><th class="num">Verifikat</th></tr></thead>
-        <tbody>
-          <tr tabindex="0" data-case="c6"><td>Revisor</td><td class="sev"><span class="dot err"></span>blockerande</td><td class="find">Momsskuld på 2650 utan verifierad deklaration för Q1–Q3 2026</td><td class="num">341 170</td><td class="num">A:1, A:294</td></tr>
-          <tr tabindex="0" data-case="c2"><td>Revisor</td><td class="sev"><span class="dot warn"></span>åtgärd</td><td class="find">Fem manuella skattebetalningar utan underlag</td><td class="num">5 × 99 895</td><td class="num">A:112–A:123</td></tr>
-          <tr tabindex="0" data-case="c4"><td>DD</td><td class="sev"><span class="dot warn"></span>åtgärd</td><td class="find">Samtliga kundfordringar förfallna, äldsta 148 dagar</td><td class="num">396 875</td><td class="num">F-20260011 m.fl.</td></tr>
-          <tr tabindex="0" data-case="c3"><td>Revisor</td><td class="sev"><span class="dot warn"></span>åtgärd</td><td class="find">Löner och avgifter för maj 2026 ej bokförda</td><td class="num">—</td><td class="num">A:60–A:76</td></tr>
-          <tr tabindex="0" data-case="c1"><td>Skatt</td><td class="sev"><span class="dot warn"></span>åtgärd</td><td class="find">Faktura från Amazon Web Services i inkorgen, ej bokförd</td><td class="num">okänt</td><td class="num">dok 3173deab</td></tr>
-          <tr tabindex="0" data-case="c5"><td>Skatt</td><td class="sev"><span class="dot info"></span>info</td><td class="find">Leverantörsfaktura WeWork godkänd men obetald sedan 2026-06-01</td><td class="num">10 625</td><td class="num">A:87</td></tr>
-          <tr tabindex="0" data-case="c7"><td>Revisor</td><td class="sev"><span class="dot info"></span>info</td><td class="find">Maj visar resultat 179 353 med kostnader 10 207: periodisering att bekräfta</td><td class="num">179 353</td><td class="num">KPI 2026-05</td></tr>
-        </tbody>
+        <tbody></tbody>
       </table>
       </div>
-      <p class="note" style="margin-top:10px">Ett ärende stängs inte här. Det stängs när rätt sak görs i bokföringen och granskaren kör om.</p>
+      <p class="note" style="margin-top:10px">Ett ärende försvinner inte med ett klick. Det lämnar listan först när rätt sak är gjord i bokföringen och en omkörning bekräftar det, eller efter ett uttryckligt beslut med not. Historiken bevaras.</p>
     </section>
 
   </div>
@@ -219,6 +328,12 @@ table.ev td.num{text-align:right;font-family:var(--mono);font-variant-numeric:ta
     </div>
   </section>
 
+  <section aria-label="Stängda och avskrivna" id="closedSec">
+    <h2>Stängda och avskrivna <span class="lbl" id="closedCount">0 st</span></h2>
+    <div class="closedgrid" id="closedGrid"></div>
+    <p class="note" style="margin-top:10px">Ett ärende lämnar listan först efter en omkörning som bekräftar åtgärden, eller efter ett uttryckligt beslut med not. Historiken bevaras.</p>
+  </section>
+
   <section aria-label="Körning">
     <div class="strip">
       <div><span class="lbl">Analys</span><span class="v">qwen3.6 · 35B · lokal nod</span><span>utreder, 27 anrop, 88 s, 0 skrivförsök</span></div>
@@ -232,39 +347,136 @@ table.ev td.num{text-align:right;font-family:var(--mono);font-variant-numeric:ta
 
 <script>
 (function(){
+  const SEV={blockerande:{cls:'err',label:'blockerande'},'åtgärd':{cls:'warn',label:'åtgärd'},info:{cls:'info',label:'info'}};
+  const STATUS={open:{label:'Öppen',cls:'open'},ack:{label:'Under åtgärd',cls:'ack'},accepted:{label:'Accepterad med not',cls:'accepted'},closed:{label:'Stängd',cls:'closed'}};
+  const ORDER=["c6","c2","c4","c3","c1","c5","c7"];
+  let selectedId="c6";
+  const OBJ=(o)=>Object.assign({status:"open",owner:"",due:"",lastRun:null,verification:""},o);
   const CASES = {
-    c6:{ref:"UH-2026-0006",title:"Momsskuld 341 170 kr på 2650 utan verifierad deklaration",role:"Revisor",sev:"blockerande",pattern:"Konto 2650 ska nollas per period av inlämnad momsdeklaration. Här finns två rörelser på hela året: öppningsbalans och årsavräkning.",closes:"Inlämnade deklarationer för Q1–Q3 2026 kopplade till respektive period, eller aktiverad Skatteverket-koppling som verifierar status.",ev:[["A:1","2026-01-01","Öppningsbalans 2650","341 170,00","verifikat"],["A:294","2025-12-31","Momsavräkning helår 2025","-341 170,00","verifikat"],["SKV","—","vat_declaration_status: EXTENSION_DISABLED","—","händelse"]]},
-    c2:{ref:"UH-2026-0002",title:"Fem manuella skattebetalningar utan underlag",role:"Revisor",sev:"åtgärd",pattern:"Betalning till skattekontot ska bära kontoutdrag eller Skatteverkets besked. Källa är manual på samtliga fem, inga dokument länkade.",closes:"Kontoutdrag eller skattekontoutdrag länkat till varje verifikat.",ev:[["A:112","2026-01-12","Inbetalning skatt + sociala 12/2025","99 895,00","verifikat · källa manual"],["A:114","2026-02-12","Inbetalning skatt + sociala 1/2026","99 895,00","verifikat · källa manual"],["A:117","2026-03-12","Inbetalning skatt + sociala 2/2026","99 895,00","verifikat · källa manual"],["A:120","2026-04-12","Inbetalning skatt + sociala 3/2026","99 895,00","verifikat · källa manual"],["A:123","2026-05-12","Inbetalning skatt + sociala 4/2026","99 895,00","verifikat · källa manual"]]},
-    c4:{ref:"UH-2026-0004",title:"Samtliga kundfordringar förfallna, 396 875 kr",role:"DD",sev:"åtgärd",pattern:"Reskontran per 2026-09-10: 12 obetalda fakturor, ingen inom 0–90 dagar. 82 % av fordran på en motpart.",closes:"Betalning, kreditering med förklaring, eller reservering för osäkra fordringar med styrelsebeslut.",ev:[["F-20260011","2026-03-17","Klient AB, 148 dagar förfallen","36 000,00","kundfaktura"],["Klient AB","—","9 fakturor totalt","324 000,00","reskontra"],["Berlin GmbH","—","1 faktura","41 000,00","reskontra"],["Helsinki Oy","—","1 faktura","20 000,00","reskontra"],["Liten Studio HB","—","1 faktura","11 875,00","reskontra"]]},
-    c3:{ref:"UH-2026-0003",title:"Löner och avgifter för maj 2026 ej bokförda",role:"Revisor",sev:"åtgärd",pattern:"Bolaget har tre anställda och lönekörning varje månad januari till april. Maj saknar 7xxx-poster helt.",closes:"Lönekörning för maj bokförd, eller dokumenterat beslut om att ingen lön utgick.",ev:[["KPI 2026-05","2026-05","Intäkt 189 560 · kostnad 10 207","179 353,00","nyckeltal"],["A:60–A:76","2026-05-01..05","11 kundfakturor bokförda","189 560,00","verifikat"],["7010/7510","2026-05","Inga poster","0,00","huvudbok"]]},
-    c1:{ref:"UH-2026-0001",title:"Faktura från Amazon Web Services i inkorgen, ej bokförd",role:"Skatt",sev:"åtgärd",pattern:"Dokument mottaget 2026-05-05, status unmatched, inget belopp extraherat, ingen leverantörsfaktura skapad. Import av tjänst utanför EU kräver omvänd moms i rätt period.",closes:"Leverantörsfaktura registrerad med import_outside_eu och bokförd i maj 2026.",ev:[["dok 3173deab","2026-05-05","aws-2026-05-05.pdf från amazon.com","okänt","dokument · unmatched"],["extraktion","—","belopp, valuta, datum saknas","—","händelse"]]},
-    c5:{ref:"UH-2026-0005",title:"WeWork WW-2026-05 godkänd men obetald",role:"Skatt",sev:"info",pattern:"Leverantörsfaktura med status approved och kvarstående belopp lika med fakturabeloppet, förfallodag passerad med mer än 90 dagar.",closes:"Betalning kopplad till verifikat, eller kreditnota från leverantören.",ev:[["cbaac289","2026-05-01","WeWork Stockholm AB, WW-2026-05","10 625,00","leverantörsfaktura · approved"],["A:87","2026-05-01","Hyra + leverantörsskuld, ingående moms 2 125 på 2641","10 625,00","verifikat"]]},
-    c7:{ref:"UH-2026-0007",title:"Maj 2026: resultat 179 353 med kostnader 10 207",role:"Revisor",sev:"info",pattern:"Månadens kostnader består av tre Stripe-avgifter, hyra, SJ och Linear. Mönstret januari till april är 95 000 till 110 000 i kostnader per månad.",closes:"Bekräftelse av periodisering, hänger på ärende UH-2026-0003.",ev:[["KPI 2026-05","2026-05","Nettoresultat","179 353,00","nyckeltal"],["A:78, A:71, A:68","2026-05","Stripe-avgifter","1 707,00","verifikat"]]}
+    c6:OBJ({ref:"UH-2026-0006",title:"Momsskuld 341 170 kr på 2650 utan verifierad deklaration",role:"Revisor",sev:"blockerande",finding:"Momsskuld på 2650 utan verifierad deklaration för Q1–Q3 2026",amount:"341 170",refs:"A:1, A:294",weight:15,verify:"Omkörning: konto 2650 stämmer mot inlämnad deklaration Q1–Q3, verifikat A:301 kopplar avräkningen till perioden.",history:[{when:"23:41:49",who:"system",action:"Ärende öppnat",note:"fynd från nattens genomgång"}],pattern:"Konto 2650 ska nollas per period av inlämnad momsdeklaration. Här finns två rörelser på hela året: öppningsbalans och årsavräkning.",closes:"Inlämnade deklarationer för Q1–Q3 2026 kopplade till respektive period, eller aktiverad Skatteverket-koppling som verifierar status.",ev:[["A:1","2026-01-01","Öppningsbalans 2650","341 170,00","verifikat"],["A:294","2025-12-31","Momsavräkning helår 2025","-341 170,00","verifikat"],["SKV","—","vat_declaration_status: EXTENSION_DISABLED","—","händelse"]]}),
+    c2:OBJ({ref:"UH-2026-0002",title:"Fem manuella skattebetalningar utan underlag",role:"Revisor",sev:"åtgärd",finding:"Fem manuella skattebetalningar utan underlag",amount:"5 × 99 895",refs:"A:112–A:123",weight:4,verify:"Omkörning: kontoutdrag länkade till A:112–A:123, samtliga fem betalningar har nu underlag.",history:[{when:"23:41:49",who:"system",action:"Ärende öppnat",note:"fynd från nattens genomgång"}],pattern:"Betalning till skattekontot ska bära kontoutdrag eller Skatteverkets besked. Källa är manual på samtliga fem, inga dokument länkade.",closes:"Kontoutdrag eller skattekontoutdrag länkat till varje verifikat.",ev:[["A:112","2026-01-12","Inbetalning skatt + sociala 12/2025","99 895,00","verifikat · källa manual"],["A:114","2026-02-12","Inbetalning skatt + sociala 1/2026","99 895,00","verifikat · källa manual"],["A:117","2026-03-12","Inbetalning skatt + sociala 2/2026","99 895,00","verifikat · källa manual"],["A:120","2026-04-12","Inbetalning skatt + sociala 3/2026","99 895,00","verifikat · källa manual"],["A:123","2026-05-12","Inbetalning skatt + sociala 4/2026","99 895,00","verifikat · källa manual"]]}),
+    c4:OBJ({ref:"UH-2026-0004",title:"Samtliga kundfordringar förfallna, 396 875 kr",role:"DD",sev:"åtgärd",finding:"Samtliga kundfordringar förfallna, äldsta 148 dagar",amount:"396 875",refs:"F-20260011 m.fl.",weight:3,verify:"Omkörning: reskontran visar betalning, kreditering eller reservering för samtliga tolv fakturor.",history:[{when:"23:41:49",who:"system",action:"Ärende öppnat",note:"fynd från nattens genomgång"}],pattern:"Reskontran per 2026-09-10: 12 obetalda fakturor, ingen inom 0–90 dagar. 82 % av fordran på en motpart.",closes:"Betalning, kreditering med förklaring, eller reservering för osäkra fordringar med styrelsebeslut.",ev:[["F-20260011","2026-03-17","Klient AB, 148 dagar förfallen","36 000,00","kundfaktura"],["Klient AB","—","9 fakturor totalt","324 000,00","reskontra"],["Berlin GmbH","—","1 faktura","41 000,00","reskontra"],["Helsinki Oy","—","1 faktura","20 000,00","reskontra"],["Liten Studio HB","—","1 faktura","11 875,00","reskontra"]]}),
+    c3:OBJ({ref:"UH-2026-0003",title:"Löner och avgifter för maj 2026 ej bokförda",role:"Revisor",sev:"åtgärd",finding:"Löner och avgifter för maj 2026 ej bokförda",amount:"—",refs:"A:60–A:76",weight:3,verify:"Omkörning: lönekörning för maj 2026 bokförd, 7010/7510 har poster.",history:[{when:"23:41:49",who:"system",action:"Ärende öppnat",note:"fynd från nattens genomgång"}],pattern:"Bolaget har tre anställda och lönekörning varje månad januari till april. Maj saknar 7xxx-poster helt.",closes:"Lönekörning för maj bokförd, eller dokumenterat beslut om att ingen lön utgick.",ev:[["KPI 2026-05","2026-05","Intäkt 189 560 · kostnad 10 207","179 353,00","nyckeltal"],["A:60–A:76","2026-05-01..05","11 kundfakturor bokförda","189 560,00","verifikat"],["7010/7510","2026-05","Inga poster","0,00","huvudbok"]]}),
+    c1:OBJ({ref:"UH-2026-0001",title:"Faktura från Amazon Web Services i inkorgen, ej bokförd",role:"Skatt",sev:"åtgärd",finding:"Faktura från Amazon Web Services i inkorgen, ej bokförd",amount:"okänt",refs:"dok 3173deab",weight:2,verify:"Omkörning: AWS-fakturan registrerad med import_outside_eu och bokförd i maj 2026.",history:[{when:"23:41:49",who:"system",action:"Ärende öppnat",note:"fynd från nattens genomgång"}],pattern:"Dokument mottaget 2026-05-05, status unmatched, inget belopp extraherat, ingen leverantörsfaktura skapad. Import av tjänst utanför EU kräver omvänd moms i rätt period.",closes:"Leverantörsfaktura registrerad med import_outside_eu och bokförd i maj 2026.",ev:[["dok 3173deab","2026-05-05","aws-2026-05-05.pdf från amazon.com","okänt","dokument · unmatched"],["extraktion","—","belopp, valuta, datum saknas","—","händelse"]]}),
+    c5:OBJ({ref:"UH-2026-0005",title:"WeWork WW-2026-05 godkänd men obetald",role:"Skatt",sev:"info",finding:"Leverantörsfaktura WeWork godkänd men obetald sedan 2026-06-01",amount:"10 625",refs:"A:87",weight:1,verify:"Omkörning: betalning kopplad till WW-2026-05, kvarstående belopp noll.",history:[{when:"23:41:49",who:"system",action:"Ärende öppnat",note:"fynd från nattens genomgång"}],pattern:"Leverantörsfaktura med status approved och kvarstående belopp lika med fakturabeloppet, förfallodag passerad med mer än 90 dagar.",closes:"Betalning kopplad till verifikat, eller kreditnota från leverantören.",ev:[["cbaac289","2026-05-01","WeWork Stockholm AB, WW-2026-05","10 625,00","leverantörsfaktura · approved"],["A:87","2026-05-01","Hyra + leverantörsskuld, ingående moms 2 125 på 2641","10 625,00","verifikat"]]}),
+    c7:OBJ({ref:"UH-2026-0007",title:"Maj 2026: resultat 179 353 med kostnader 10 207",role:"Revisor",sev:"info",finding:"Maj visar resultat 179 353 med kostnader 10 207: periodisering att bekräfta",amount:"179 353",refs:"KPI 2026-05",weight:1,verify:"Omkörning: periodiseringen bekräftad, maj kostnadsförs mot rätt period.",history:[{when:"23:41:49",who:"system",action:"Ärende öppnat",note:"fynd från nattens genomgång"}],pattern:"Månadens kostnader består av tre Stripe-avgifter, hyra, SJ och Linear. Mönstret januari till april är 95 000 till 110 000 i kostnader per månad.",closes:"Bekräftelse av periodisering, hänger på ärende UH-2026-0003.",ev:[["KPI 2026-05","2026-05","Nettoresultat","179 353,00","nyckeltal"],["A:78, A:71, A:68","2026-05","Stripe-avgifter","1 707,00","verifikat"]]})
   };
   const drawer=document.getElementById('drawer'), ref=document.getElementById('drawerRef');
+  const resolved=c=>c.status==='closed'||c.status==='accepted';
+  const chip=s=>{const m=STATUS[s];return `<span class="chip ${m.cls}">${m.label}</span>`};
+  const now=()=>new Date().toLocaleString('sv-SE',{hour12:false}).slice(5,16);
+  const record=(c,who,action,note)=>c.history.push({when:now(),who,action,note});
+
+  function renderRows(){
+    document.querySelector('#cases tbody').innerHTML=ORDER.filter(id=>!resolved(CASES[id])).map(id=>{
+      const c=CASES[id],s=SEV[c.sev];
+      return `<tr tabindex="0" data-case="${id}" aria-selected="${id===selectedId?'true':'false'}"><td>${c.role}</td><td class="sev"><span class="dot ${s.cls}"></span>${s.label}</td><td class="find">${c.finding}</td><td class="num">${c.amount}</td><td class="num">${c.refs}</td></tr>`;
+    }).join('');
+    document.getElementById('caseCount').textContent=ORDER.filter(id=>!resolved(CASES[id])).length;
+  }
+
+  function historyHtml(c){
+    return c.history.slice().reverse().map(h=>`<div class="h"><span class="when">${h.when}</span><div class="what"><b>${h.action}</b><span>${h.who}${h.note?' · '+h.note:''}</span></div></div>`).join('')||'<div class="h"><span class="when">—</span><div class="what"><span>Ingen händelse ännu</span></div></div>';
+  }
+
   function render(id){
-    const c=CASES[id];
+    const c=CASES[id],isRes=resolved(c);
     ref.textContent='ärende '+c.ref;
+    const panel=isRes
+      ?`<div class="result ok"><b>${c.status==='closed'?'Stängd efter omkörning':'Accepterad med not'}</b><br>${c.verification}</div>`
+      :`<div class="actions">
+          <div class="row">
+            <label>Ansvarig<input type="text" id="fOwner" value="${c.owner}" placeholder="namn eller roll"></label>
+            <label>Förfaller<input type="date" id="fDue" value="${c.due}"></label>
+            <button class="btn" id="bOwner">${c.status==='ack'?'Uppdatera ansvarig':'Ange ansvarig'}</button>
+          </div>
+          <div class="checks"><input type="checkbox" id="fFixed"><span>Bekräfta att rätt sak är gjord i bokföringen. Ärendet stängs först när en omkörning bekräftar att mönstret inte kvarstår.</span></div>
+          <div class="btnline"><button class="btn primary" id="bRerun">Kör om granskaren</button><button class="btn" id="bAccept">Acceptera med not</button><span class="lbl" id="runState"></span></div>
+          <div id="acceptBox" hidden><label>Not till beslutet<textarea id="fNote" placeholder="varför avvikelsen accepteras och vem som beslutat"></textarea></label><div class="btnline" style="margin-top:8px"><button class="btn primary" id="bAcceptDo" disabled>Bekräfta acceptera med not</button><button class="btn" id="bAcceptCancel">Avbryt</button></div></div>
+          ${c.lastRun?`<div class="result ${c.lastRun.ok?'ok':'err'}">${c.lastRun.text}</div>`:''}
+        </div>`;
     drawer.innerHTML=`
       <div class="main">
-        <h3>${c.title}</h3>
-        <dl class="kv"><dt>Roll</dt><dd>${c.role}</dd><dt>Allvar</dt><dd>${c.sev}</dd><dt>Avviker från</dt><dd>${c.pattern}</dd><dt>Vad stänger det</dt><dd>${c.closes}</dd></dl>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><h3>${c.title}</h3>${chip(c.status)}</div>
+        <dl class="kv"><dt>Roll</dt><dd>${c.role}</dd><dt>Allvar</dt><dd>${c.sev}</dd><dt>Ansvarig</dt><dd>${c.owner?c.owner+(c.due?' · förfaller '+c.due:''):'ej satt'}</dd><dt>Avviker från</dt><dd>${c.pattern}</dd><dt>Vad stänger det</dt><dd>${c.closes}</dd></dl>
+        ${panel}
         <table class="ev"><thead><tr><th>Referens</th><th>Datum</th><th>Vad</th><th class="num">Belopp</th><th>Typ</th></tr></thead><tbody>
         ${c.ev.map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td><td>${r[2]}</td><td class="num">${r[3]}</td><td>${r[4]}</td></tr>`).join('')}
         </tbody></table>
+        <div><span class="lbl">Historik</span><div class="history">${historyHtml(c)}</div></div>
       </div>
       <aside>
         <div><span class="lbl">Underlagsgrad</span><p>NATIVE FULL HISTORY. Verifikat, historik och dokument kommer från systemet självt, inte från import.</p></div>
         <div><span class="lbl">Hur det hittades</span><p>Granskaren läste huvudbok och reskontra via läsverktyg, jämförde mot mönstret ovan och bifogade varje id den stödjer sig på. Inga antaganden om belopp eller datum.</p></div>
-        <div><span class="lbl">Vad som inte gjordes</span><p>Ingenting skrevs. Nyckeln saknar skrivbehörighet, och försöket hade loggats här om det gjorts.</p></div>
+        <div><span class="lbl">Vad som inte gjordes</span><p>Ingenting skrevs i bokföringen. Nyckeln saknar skrivbehörighet. Stängning kräver en omkörning som bekräftar åtgärden, eller ett uttryckligt beslut med not.</p></div>
       </aside>`;
-    document.querySelectorAll('#cases tbody tr').forEach(tr=>tr.setAttribute('aria-selected',tr.dataset.case===id?'true':'false'));
+    if(!isRes) wire(id);
   }
-  document.querySelectorAll('#cases tbody tr').forEach(tr=>{
-    tr.addEventListener('click',()=>{render(tr.dataset.case);document.getElementById('drawerSec').scrollIntoView({behavior:'smooth',block:'nearest'});});
-    tr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();tr.click();}});
-  });
-  render('c6');
+
+  function wire(id){
+    const c=CASES[id],q=x=>document.getElementById(x);
+    q('bOwner').onclick=()=>{
+      const owner=q('fOwner').value.trim(),due=q('fDue').value;
+      if(!owner&&!due)return;
+      if(owner)c.owner=owner; if(due)c.due=due;
+      c.status='ack';
+      record(c,'människa','Ansvarig satt'+(c.due?' · förfaller '+c.due:''),c.owner);
+      refresh();
+    };
+    q('bRerun').onclick=()=>{
+      const fixed=q('fFixed').checked;
+      ['bRerun','bAccept','bOwner'].forEach(x=>q(x).disabled=true);
+      q('runState').innerHTML='<span class="spin"></span>Läser huvudbok och reskontra';
+      setTimeout(()=>{
+        if(fixed){
+          c.status='closed'; c.verification=c.verify;
+          record(c,'system','Stängd efter omkörning','mönstret kvarstår inte längre');
+        }else{
+          c.lastRun={ok:false,text:'Omkörning '+now()+': mönstret kvarstår. Ärendet ligger kvar i listan. Åtgärda i bokföringen och kör om.'};
+          record(c,'system','Omkörning','mönstret kvarstår');
+        }
+        refresh();
+      },1400);
+    };
+    q('bAccept').onclick=()=>{q('acceptBox').hidden=false;q('fNote').focus();};
+    q('fNote').oninput=()=>{q('bAcceptDo').disabled=q('fNote').value.trim().length<8;};
+    q('bAcceptCancel').onclick=()=>{q('acceptBox').hidden=true;};
+    q('bAcceptDo').onclick=()=>{
+      const note=q('fNote').value.trim();
+      c.status='accepted'; c.verification='Accepterad med not: '+note;
+      record(c,'människa','Accepterad med not',note);
+      refresh();
+    };
+  }
+
+  function renderClosed(){
+    const ids=ORDER.filter(id=>resolved(CASES[id]));
+    document.getElementById('closedCount').textContent=ids.length+' st';
+    document.getElementById('closedGrid').innerHTML=ids.map(id=>{
+      const c=CASES[id];
+      return `<div class="cl"><b>${c.title}</b><span>${c.status==='closed'?'Stängd efter omkörning':'Accepterad med not'} · ${c.role}</span><span>${c.verification}</span><span class="num">${c.ref} · ${c.refs}</span></div>`;
+    }).join('')||'<div class="cl"><b>Inga ännu</b><span>Ärenden som stängts eller skrivits av hamnar här med sin historik bevarad.</span></div>';
+  }
+
+  function refreshReadiness(){
+    const live=ORDER.map(id=>CASES[id]).filter(c=>!resolved(c));
+    document.getElementById('cBlocking').textContent=live.filter(c=>c.sev==='blockerande').length;
+    document.getElementById('cAttention').textContent=live.filter(c=>c.sev==='åtgärd').length;
+    document.getElementById('cInfo').textContent=live.filter(c=>c.sev==='info').length;
+    let score=64;
+    ORDER.map(id=>CASES[id]).forEach(c=>{if(c.status==='closed')score+=c.weight;else if(c.status==='accepted')score+=c.weight*0.5;});
+    document.getElementById('auditScore').textContent=Math.min(100,Math.round(score));
+    if(CASES.c6.status==='closed')document.getElementById('auditFoot').textContent='Momskulden på 2650 är avstämd mot inlämnade deklarationer. Viktad på allvar och underlag.';
+  }
+
+  function refresh(){renderRows();renderClosed();render(selectedId);refreshReadiness();}
+  function select(id){selectedId=id;renderRows();render(id);document.getElementById('drawerSec').scrollIntoView({behavior:'smooth',block:'nearest'});}
+
+  const casesTable=document.getElementById('cases');
+  casesTable.addEventListener('click',e=>{const tr=e.target.closest('tr[data-case]');if(tr)select(tr.dataset.case);});
+  casesTable.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('tr[data-case]')){e.preventDefault();select(e.target.dataset.case);}});
+
+  renderRows();renderClosed();render(selectedId);refreshReadiness();
 
   // work log, replayed from tonight's runs
   const L=[
