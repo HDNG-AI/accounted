@@ -2,3 +2,5 @@
 .env.*
 !.env.example
 scripts/plant-manifest.local.json
+__pycache__/
+*.pyc
