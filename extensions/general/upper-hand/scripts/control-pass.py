@@ -58,8 +58,19 @@ def main():
     content = re.sub(r"^\s*```(?:json)?\s*|\s*```\s*$", "", content.strip())
     m = re.search(r"\{.*\}", content, re.S)
     if not m: print("[control] no JSON in reply", file=sys.stderr); print(content[:2000]); sys.exit(3)
-    try: data = json.loads(m.group(0), strict=False)   # gemma4 puts raw newlines inside the markdown string
-    except json.JSONDecodeError as e: print(f"[control] bad JSON: {e}", file=sys.stderr); print(content[:2000]); sys.exit(3)
+    raw = m.group(0)
+    try: data = json.loads(raw, strict=False)   # gemma4 puts raw newlines inside the markdown string
+    except json.JSONDecodeError:
+        # gemma4 sometimes emits `],"\n "rapport_sv"` (a stray quote after the array). Repair, then fall back to field extraction.
+        fixed = re.sub(r'\],\s*"\s*\n\s*"rapport_sv"', '],"rapport_sv"', raw)
+        try: data = json.loads(fixed, strict=False)
+        except json.JSONDecodeError as e:
+            km = re.search(r'"kontroll"\s*:\s*(\[.*?\])\s*,', raw, re.S); rm = re.search(r'"rapport_sv"\s*:\s*"(.*)"\s*\}\s*$', raw, re.S)
+            if not (km and rm): print(f"[control] bad JSON: {e}", file=sys.stderr); print(content[:2000]); sys.exit(3)
+            try: kontroll = json.loads(km.group(1), strict=False)
+            except json.JSONDecodeError: kontroll = []
+            data = {"kontroll": kontroll, "rapport_sv": rm.group(1).replace('\\n', '\n').replace('\\"', '"')}
+            print("[control] JSON repaired by field extraction", file=sys.stderr)
     k = data.get("kontroll", [])
     problems = gate(data.get("rapport_sv", ""))
     print(f"[control] model={MODEL} prompt={u.get('prompt_tokens')} completion={u.get('completion_tokens')} findings={len(k)} "
