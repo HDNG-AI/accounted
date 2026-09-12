@@ -232,6 +232,11 @@ const JEL_INSERT_SANCTIONED = new Set([
   'lib/core/bookkeeping/storno-service.ts',
   'lib/import/sie-import.ts',
   'app/api/sandbox/seed/route.ts',
+  // Upper Hand demo seeder: posts planted vouchers into the throwaway demo
+  // company exactly like scripts/seed-demo-account.ts (which sits outside this
+  // guard's scan). It never runs against a tenant; it is the fixture the
+  // reviewer panel is scored against. Not production ledger code.
+  'extensions/general/upper-hand/scripts/plant-errors.ts',
 ])
 // Matches an insert CHAINED on the lines table (`.from('journal_entry_lines').insert(`,
 // with optional whitespace/newlines in the chain): select-only readers don't count.
