@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TH_CLASS, TD_CLASS } from '@/components/ui/dry-table'
 import { getErrorMessage } from '@/lib/errors/get-error-message'
 import { cn } from '@/lib/utils'
+import UpperHandStatusRail from '@/components/extensions/general/UpperHandStatusRail'
 import type {
   UpperHandCase,
   UpperHandCaseStatus,
@@ -161,6 +162,7 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
 
   return (
     <div className="space-y-8">
+      <UpperHandStatusRail />
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader>

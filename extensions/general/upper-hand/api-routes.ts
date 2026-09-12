@@ -11,6 +11,8 @@ import {
 } from './lib/case-store'
 import { recheckCase } from './lib/recheck'
 import type { UpperHandCase } from './lib/case-types'
+import { isLive, listRuns } from './lib/run-store'
+import { listPersonas, type PanelStatus } from './lib/panel-status'
 
 const acknowledgeSchema = z
   .object({
@@ -195,7 +197,25 @@ async function handleRerun(
   return NextResponse.json({ data: { case: updated, outcome } })
 }
 
+async function handleStatus(_request: Request, ctx?: ExtensionContext): Promise<Response> {
+  if (!ctx) return errorResponse('NO_CONTEXT', 'Extension context saknas.', 500)
+  const runs = await listRuns(ctx.supabase, ctx.companyId)
+  const personas = listPersonas().map((p) => {
+    const last = runs.find((r) => r.persona === p.id) ?? null
+    return { ...p, last_run: last, live: last ? isLive(last) : false }
+  })
+  const status: PanelStatus = {
+    personas,
+    live: personas.some((p) => p.live),
+    models: { analysis: 'qwen3.6:35b-a3b', control: 'gemma4:31b', provider: 'Staik · SE' },
+    access: 'Läsnyckel: inga skrivverktyg exponerade',
+    generated_at: new Date().toISOString(),
+  }
+  return NextResponse.json(status)
+}
+
 export const upperHandApiRoutes: ApiRouteDefinition[] = [
+  { method: 'GET', path: '/status', handler: handleStatus },
   { method: 'GET', path: '/cases', handler: handleListCases },
   { method: 'POST', path: '/cases/:id/acknowledge', handler: handleAcknowledge },
   { method: 'POST', path: '/cases/:id/accept', handler: handleAccept },

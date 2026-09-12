@@ -12,7 +12,7 @@ Guards (from the 2026-09-11 runs):
 - finish_reason is logged; "length" on a no-tool turn counts as a rejection.
 Spike quality: stdlib only, no compaction. The real thing lives in the extension.
 """
-import json, os, re, sys, time, urllib.request
+import json, os, re, sys, time, urllib.request, subprocess
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 for line in open(os.path.join(ROOT, ".env")):
@@ -23,6 +23,18 @@ STAIK = os.environ["STAIK_API_KEY"]; ACC = os.environ["ACCOUNTED_API_KEY"]
 MODEL = os.environ.get("MODEL", "qwen3.6:35b-a3b")
 MCP = os.environ.get("ACCOUNTED_MCP_URL", "http://localhost:3001/api/extensions/ext/mcp-server/mcp?tool_namespace=accounted")
 MAX_RESULT = 8000
+ACCOUNTED_ROOT = os.environ.get("ACCOUNTED_ROOT", os.path.expanduser("~/dev/accounted"))
+CONTROL_MODEL = os.environ.get("CONTROL_MODEL", "gemma4:31b")
+
+def record_run(*args):
+    """Best effort: tell the panel a run started or finished. Never fails the run."""
+    script = os.path.join(ACCOUNTED_ROOT, "extensions/general/upper-hand/scripts/record-run.ts")
+    if not os.path.exists(script): return None
+    try:
+        out = subprocess.run(["npx", "tsx", script, *args], cwd=ACCOUNTED_ROOT, capture_output=True, text=True, timeout=90)
+        return out.stdout.strip().splitlines()[-1] if out.returncode == 0 and out.stdout.strip() else None
+    except Exception as e:
+        print(f"[record-run] skipped: {type(e).__name__}", file=sys.stderr); return None
 
 DEFAULT_CHECKS = {
     "auditor": ["aud-9.34-tax-account-late", "aud-1.4-payment-booked-as-cost", "aud-3.3-depreciation-missing", "aud-4.1-result-disposition", "aud-25.13-equity-half"],
@@ -73,6 +85,8 @@ def main():
     raw = mcp("tools/list", {})["result"]["tools"]
     tools = [{"type":"function","function":{"name":t["name"],"description":t.get("description","")[:280],"parameters":t.get("inputSchema",{"type":"object","properties":{}})}} for t in raw]
     print(f"[setup] model={MODEL} persona={persona} checks={checks} tools={len(tools)} system_chars={len(system)}", file=sys.stderr)
+    run_id = record_run("start", persona, ",".join(checks), MODEL, CONTROL_MODEL)
+    if run_id: print(f"[run] registered {run_id}", file=sys.stderr)
     messages = [{"role":"system","content":system},
                 {"role":"user","content":"Review the company Konsult AB (the default company for this key). Run your checks in order and report."}]
     totals = {"prompt":0,"completion":0,"tool_calls":0,"errors":0,"rejections":0}
@@ -114,5 +128,9 @@ def main():
     else:
         print("[stop] max turns reached", file=sys.stderr)
     print(f"[total] turns={turn} prompt={totals['prompt']} completion={totals['completion']} tool_calls={totals['tool_calls']} errors={totals['errors']} rejections={totals['rejections']} time={time.time()-t0:.0f}s", file=sys.stderr)
+    if run_id:
+        final = messages[-1].get("content") if messages and messages[-1].get("role") == "assistant" else ""
+        findings = len(re.findall(r"(?im)^\**\s*(severity|allvar)\b", final or "")) or None
+        record_run("finish", run_id, json.dumps({"turns": turn, "tool_calls": totals["tool_calls"], "findings": findings, "status": "done"}))
 
 if __name__ == "__main__": main()
