@@ -11,8 +11,9 @@
  * reviewers would see it); --undo reverses each planted voucher with a mirrored entry.
  * Reads NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from .env.local.
  */
-import { createClient } from '@supabase/supabase-js'
 import { config as dotenv } from 'dotenv'
+import { createServiceRoleClient } from '../../../../lib/supabase/service-client'
+import { roundOre } from '../../../../lib/money'
 import { resolve, dirname } from 'node:path'
 import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -21,7 +22,7 @@ dotenv({ path: resolve(process.cwd(), '.env.local') })
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 if (!URL || !KEY) { console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local'); process.exit(1) }
-const sb = createClient(URL, KEY, { auth: { persistSession: false } })
+const sb = createServiceRoleClient(URL, KEY)
 
 const COMPANY_NAME = 'Konsult AB'
 const OWNER_EMAIL = process.env.UH_OWNER_EMAIL ?? 'erik@hdng.ai'
@@ -29,7 +30,6 @@ const SERIES = 'A'
 const args = process.argv.slice(2)
 const UNDO = args.includes('--undo')
 const only = (() => { const i = args.indexOf('--only'); return i >= 0 ? new Set(args[i + 1].split(',')) : null })()
-const round2 = (n: number) => Math.round(n * 100) / 100
 // Planted voucher ids live in a local manifest, never in the ledger: anything written to the
 // voucher (notes included) is visible to the reviewers through the MCP tools and would leak the plant.
 const MANIFEST = resolve(dirname(fileURLToPath(import.meta.url)), 'plant-manifest.local.json')
@@ -59,7 +59,13 @@ async function ctx(): Promise<Ctx> {
   // Several orphaned "Konsult AB" rows can exist after re-seeding; the real one is the one the owner is a member of.
   const { data: mem, error: ce } = await sb.from('company_members').select('company_id, companies:company_id(id, name, archived_at)').eq('user_id', user.id)
   if (ce) throw ce
-  const hit = (mem ?? []).map((m: any) => m.companies).find((c: any) => c && c.name === COMPANY_NAME && !c.archived_at)
+  type MembershipCompany = { id: string; name: string; archived_at: string | null }
+  const memberships = (mem ?? []) as unknown as Array<{
+    companies: MembershipCompany | MembershipCompany[] | null
+  }>
+  const hit = memberships
+    .map((m) => (Array.isArray(m.companies) ? m.companies[0] : m.companies))
+    .find((c) => c && c.name === COMPANY_NAME && !c.archived_at)
   if (!hit) throw new Error(`Company ${COMPANY_NAME} not found among ${OWNER_EMAIL}'s memberships`)
   const co = { id: hit.id as string }
   const { data: fp } = await sb.from('fiscal_periods').select('id').eq('company_id', co.id).eq('period_start', '2026-01-01').single()
@@ -81,7 +87,7 @@ async function ctx(): Promise<Ctx> {
 const planted = (id: string) => (manifest[id]?.vouchers.length ?? 0) > 0 && !manifest[id]?.undone
 
 async function post(c: Ctx, id: string, date: string, description: string, lines: Line[], opts: { sourceType?: string; sourceId?: string | null; undo?: boolean } = {}): Promise<string> {
-  const deb = round2(lines.reduce((s, l) => s + (l.debit ?? 0), 0)), cred = round2(lines.reduce((s, l) => s + (l.credit ?? 0), 0))
+  const deb = roundOre(lines.reduce((s, l) => s + (l.debit ?? 0), 0)), cred = roundOre(lines.reduce((s, l) => s + (l.credit ?? 0), 0))
   if (deb !== cred) throw new Error(`${id} unbalanced ${deb} vs ${cred}`)
   const n = c.next++
   const { data: je, error } = await sb.from('journal_entries').insert({
@@ -92,7 +98,7 @@ async function post(c: Ctx, id: string, date: string, description: string, lines
   if (error) throw new Error(`${id} header: ${error.message}`)
   const { error: le } = await sb.from('journal_entry_lines').insert(lines.map((l, i) => ({
     journal_entry_id: je.id, account_number: l.account, account_id: c.accounts[l.account] ?? null,
-    debit_amount: round2(l.debit ?? 0), credit_amount: round2(l.credit ?? 0), line_description: l.description ?? null, sort_order: i,
+    debit_amount: roundOre(l.debit ?? 0), credit_amount: roundOre(l.credit ?? 0), line_description: l.description ?? null, sort_order: i,
   })))
   if (le) throw new Error(`${id} lines: ${le.message}`)
   const { error: pe } = await sb.from('journal_entries').update({ status: 'posted' }).eq('id', je.id)
@@ -187,7 +193,7 @@ const PLANTS: Record<string, (c: Ctx) => Promise<void>> = {
   // Owner addition A1: consumables bought in private contexts (holidays, weekends), booked as representation, full VAT, no participants
   P8: async (c) => {
     for (const [d, who, total, rate, ctxt] of HOLIDAY_BUYS) {
-      const net = round2(total / (1 + rate / 100)), vat = round2(total - net)
+      const net = roundOre(total / (1 + rate / 100)), vat = roundOre(total - net)
       await post(c, 'P8', d, `Representation ${who}`, [
         { account: '6071', debit: net, description: `${who} (${ctxt})` }, { account: '2641', debit: vat, description: 'Ingående moms' }, { account: '1930', credit: total }])
     }

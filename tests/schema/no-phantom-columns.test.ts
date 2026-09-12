@@ -181,7 +181,14 @@ const KNOWN_STALE_ON_CONFLICT: Record<string, string> = {}
 // once as a batch and again per invoice when the batch is rejected. The header
 // VAT update in the same module is an object literal and is checked. Merged
 // with main (#2289) at 402: 404.
-const UNRESOLVED_CEILING = 404
+// 2026-09-12: +1 for the Upper Hand demo seeder
+// (extensions/general/upper-hand/scripts/plant-errors.ts): it posts N planted
+// vouchers from a runtime row array (.map over the line list), the same
+// dynamic-payload shape as scripts/seed-demo-account.ts, which sits outside the
+// scan because it is not under extensions/. The fixture is throwaway demo data,
+// never a tenant ledger; every other query in that extension is a checked
+// object literal. 405.
+const UNRESOLVED_CEILING = 405
 
 /**
  * Floor on statically resolved column references. Guards the guard: if a change
