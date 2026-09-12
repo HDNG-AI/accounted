@@ -14,6 +14,9 @@ Spike quality: stdlib only, no compaction. The real thing lives in the extension
 """
 import json, os, re, sys, time, urllib.request
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import evidence_ledger
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 for line in open(os.path.join(ROOT, ".env")):
     if "=" in line and not line.startswith("#"):
@@ -77,6 +80,7 @@ def main():
                 {"role":"user","content":"Review the company Konsult AB (the default company for this key). Run your checks in order and report."}]
     totals = {"prompt":0,"completion":0,"tool_calls":0,"errors":0,"rejections":0}
     real_calls = 0; t0 = time.time(); turn = 0
+    events = []; report = ""
     for turn in range(1, max_turns+1):
         if turn == int(max_turns * 0.7) + 1:
             messages.append({"role":"user","content":f"You have {max_turns - turn + 1} turns left. Stop exploring and write your report now, in the required format, based only on tool results in this conversation."})
@@ -95,7 +99,7 @@ def main():
             continue
         messages.append({"role":"assistant","content":msg.get("content"),"tool_calls":calls or None})
         if not calls:
-            print(msg.get("content") or "(no content)")
+            report = msg.get("content") or ""
             break
         for c in calls:
             name = c["function"]["name"]; totals["tool_calls"] += 1; real_calls += 1
@@ -111,8 +115,30 @@ def main():
             if len(out) > MAX_RESULT: out = out[:MAX_RESULT] + "\n[truncated]"
             print(f"         -> {name}({json.dumps(args, ensure_ascii=False)[:120]}) {len(out)} chars{' ERROR' if out.startswith('ERROR') else ''}", file=sys.stderr)
             messages.append({"role":"tool","tool_call_id":c["id"],"content":out})
+            events.append({"tool": name, "args": args, "content": out})
     else:
         print("[stop] max turns reached", file=sys.stderr)
+
+    ledger = evidence_ledger.build_ledger(events)
+    ledger_path = os.environ.get("EVIDENCE_OUT", f"/tmp/uh-evidence-{persona}.json")
+    try:
+        with open(ledger_path, "w", encoding="utf-8") as fh:
+            json.dump(ledger.to_dict(), fh, ensure_ascii=False, indent=2)
+        print(f"[evidence] ledger={ledger_path} amounts={len(ledger.values)} ids={len(ledger.ids)}", file=sys.stderr)
+    except OSError as e:
+        print(f"[evidence] could not write ledger: {e}", file=sys.stderr)
+
+    if report:
+        verdict = evidence_ledger.verify_report(report, ledger)
+        for amount, replacement in verdict.corrections:
+            print(f"[evidence] rättat {amount.text} -> {replacement}", file=sys.stderr)
+        for amount in verdict.unknown_amounts:
+            print(f"[evidence] belopp saknar källa: {amount.text}", file=sys.stderr)
+        for identifier in verdict.unknown_ids:
+            print(f"[evidence] id saknar källa: {identifier}", file=sys.stderr)
+        report = evidence_ledger.apply_corrections(report, verdict)
+        print(report)
+
     print(f"[total] turns={turn} prompt={totals['prompt']} completion={totals['completion']} tool_calls={totals['tool_calls']} errors={totals['errors']} rejections={totals['rejections']} time={time.time()-t0:.0f}s", file=sys.stderr)
 
 if __name__ == "__main__": main()

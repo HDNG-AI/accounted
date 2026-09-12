@@ -14,6 +14,9 @@ Exit code 2 if the gate fails, so a pipeline stops before anything reaches a use
 """
 import json, os, re, sys, urllib.request
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import evidence_ledger
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 for line in open(os.path.join(ROOT, ".env")):
     if "=" in line and not line.startswith("#"):
@@ -50,9 +53,41 @@ def gate(text):
     return problems
 
 def main():
-    path = sys.argv[1]; want_json = "--json" in sys.argv
+    argv = sys.argv[1:]
+    ledger = None
+    if "--ledger" in argv:
+        i = argv.index("--ledger")
+        with open(argv[i + 1], encoding="utf-8") as fh:
+            ledger = evidence_ledger.Ledger.from_dict(json.load(fh))
+        del argv[i:i + 2]
+    path = argv[0]; want_json = "--json" in argv
     analysis = open(path, encoding="utf-8").read()
-    resp = chat([{"role": "system", "content": SYSTEM}, {"role": "user", "content": "Analys att kontrollera:\n\n" + analysis}])
+
+    ledger_note = ""
+    if ledger is not None:
+        pre = evidence_ledger.verify_report(analysis, ledger)
+        for amount, replacement in pre.corrections:
+            print(f"[evidence] rättat {amount.text} -> {replacement}", file=sys.stderr)
+        if pre.corrections:
+            analysis = evidence_ledger.apply_corrections(analysis, pre)
+        if pre.unknown_amounts or pre.unknown_ids:
+            for amount in pre.unknown_amounts:
+                print(f"[evidence] belopp saknar källa: {amount.text}", file=sys.stderr)
+            for identifier in pre.unknown_ids:
+                print(f"[evidence] id saknar källa: {identifier}", file=sys.stderr)
+            print("[control] evidence gate failed before the model call", file=sys.stderr)
+            sys.exit(2)
+        ledger_note = (
+            "\n\nLiggare, hämtad ur verktygssvaren. Varje belopp, datum och id i rapporten "
+            "måste finnas här. En siffra som inte finns i liggaren får inte stå kvar: markera "
+            "fyndet nedgraderat med skalet \"belopp saknar källa\" och rätta siffran bara om "
+            "liggaren är entydig.\nid: "
+            + " ".join(sorted(ledger.ids))
+            + "\nbelopp: "
+            + ", ".join(sorted(set(ledger.digits.values())))
+        )
+
+    resp = chat([{"role": "system", "content": SYSTEM}, {"role": "user", "content": "Analys att kontrollera:\n\n" + analysis + ledger_note}])
     content = resp["choices"][0]["message"]["content"] or ""
     u = resp.get("usage", {})
     content = re.sub(r"^\s*```(?:json)?\s*|\s*```\s*$", "", content.strip())
@@ -77,6 +112,17 @@ def main():
     rep = data.get("rapport_sv", "")
     if rep != rep.translate(digits): print("[control] normalised non-ASCII digits in the report", file=sys.stderr); rep = rep.translate(digits); data["rapport_sv"] = rep
     problems = gate(rep)
+    if ledger is not None:
+        post = evidence_ledger.verify_report(rep, ledger)
+        for amount, replacement in post.corrections:
+            print(f"[evidence] rättat {amount.text} -> {replacement}", file=sys.stderr)
+        if post.corrections:
+            rep = evidence_ledger.apply_corrections(rep, post)
+            data["rapport_sv"] = rep
+        for amount in post.unknown_amounts:
+            problems.append(f"belopp saknar källa: {amount.text}")
+        for identifier in post.unknown_ids:
+            problems.append(f"id saknar källa: {identifier}")
     print(f"[control] model={MODEL} prompt={u.get('prompt_tokens')} completion={u.get('completion_tokens')} findings={len(k)} "
           f"godkänt={sum(1 for x in k if x.get('status')=='godkänt')} nedgraderat={sum(1 for x in k if x.get('status')=='nedgraderat')} "
           f"avvisat={sum(1 for x in k if x.get('status')=='avvisat')} gate={'OK' if not problems else 'FAIL ' + '; '.join(problems)}", file=sys.stderr)
