@@ -12,6 +12,8 @@ import { resolve } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { createServiceRoleClient } from '../../../../lib/supabase/service-client'
 import { listRuns, putRun, type UpperHandRun } from '../lib/run-store'
+import { upsertCaseByIdempotencyKey } from '../lib/case-store'
+import type { UpperHandCaseInput, UpperHandSeverity } from '../lib/case-types'
 
 dotenv({ path: resolve(process.cwd(), '.env.local') })
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -35,6 +37,37 @@ async function context(): Promise<{ userId: string; companyId: string }> {
   return { userId: user.id, companyId: hit.id }
 }
 
+type RunCase = {
+  check_id?: string; severity?: string; finding?: string; pattern_deviated_from?: string
+  evidence?: { voucher_refs?: string[]; document_ids?: string[]; event_ids?: string[] }
+  what_closes_it?: { owner?: string | null; due_date?: string | null }
+  auditor_duty?: string | null
+}
+const SITUATION: Record<string, string> = { auditor: 'audit', 'tax-reviewer': 'tax_review', 'dd-analyst': 'sale' }
+const SEVERITIES = new Set(['info', 'attention', 'blocking'])
+
+function toCaseInput(companyId: string, persona: string, c: RunCase): UpperHandCaseInput | null {
+  if (!c.check_id || !c.finding) return null
+  const severity = (SEVERITIES.has(c.severity ?? '') ? c.severity : 'attention') as UpperHandSeverity
+  const vouchers = (c.evidence?.voucher_refs ?? []).map(String).filter(Boolean)
+  const anchor = vouchers[0] ?? c.finding.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 60)
+  return {
+    case_id: '',
+    company_id: companyId,
+    role: persona,
+    check_id: c.check_id,
+    situation: SITUATION[persona] ?? 'audit',
+    severity,
+    due_before: c.what_closes_it?.due_date && /^\d{4}-\d{2}-\d{2}$/.test(c.what_closes_it.due_date) ? c.what_closes_it.due_date : null,
+    finding: c.finding,
+    pattern_deviated_from: c.pattern_deviated_from ?? '',
+    evidence: { voucher_ids: vouchers, event_ids: c.evidence?.event_ids ?? [], document_ids: c.evidence?.document_ids ?? [], counterparty_history_ref: null },
+    provenance_grade: 'native_full_history',
+    what_closes_it: { owner: c.what_closes_it?.owner ?? null, due_date: c.what_closes_it?.due_date ?? null },
+    idempotency_key: `${persona}|${c.check_id}|${anchor}`,
+  }
+}
+
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2)
   const { userId, companyId } = await context()
@@ -54,9 +87,17 @@ async function main() {
     const runs = await listRuns(sb, companyId)
     const run = runs.find((r) => r.run_id === runId)
     if (!run) throw new Error(`run ${runId} not found`)
-    const patch = JSON.parse(json ?? '{}') as Partial<UpperHandRun>
-    await putRun(sb, userId, companyId, { ...run, ...patch, finished_at: new Date().toISOString(), status: patch.status ?? 'done' })
-    process.stdout.write('ok\n')
+    const payload = JSON.parse(json ?? '{}') as Partial<UpperHandRun> & { cases?: RunCase[] }
+    const { cases, ...patch } = payload
+    let created = 0
+    for (const c of cases ?? []) {
+      const input = toCaseInput(companyId, run.persona, c)
+      if (!input) continue
+      await upsertCaseByIdempotencyKey(sb, userId, input)
+      created++
+    }
+    await putRun(sb, userId, companyId, { ...run, ...patch, findings: patch.findings ?? created, finished_at: new Date().toISOString(), status: patch.status ?? 'done' })
+    process.stdout.write(`ok cases=${created}\n`)
     return
   }
   throw new Error('usage: record-run.ts start <persona> <checks> <model> [control] | finish <run_id> <json>')
