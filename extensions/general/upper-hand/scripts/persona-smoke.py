@@ -25,7 +25,7 @@ MCP = os.environ.get("ACCOUNTED_MCP_URL", "http://localhost:3001/api/extensions/
 MAX_RESULT = 8000
 
 DEFAULT_CHECKS = {
-    "auditor": ["aud-1.4-payment-booked-as-cost", "aud-3.3-depreciation-missing", "aud-4.1-result-disposition"],
+    "auditor": ["aud-9.34-tax-account-late", "aud-1.4-payment-booked-as-cost", "aud-3.3-depreciation-missing", "aud-4.1-result-disposition", "aud-25.13-equity-half"],
     "tax-reviewer": ["tax-4.4-employee-receivable-drift", "tax-foreign-receipt-local-vat", "tax-A1-consumables-private-context"],
 }
 RULES = """

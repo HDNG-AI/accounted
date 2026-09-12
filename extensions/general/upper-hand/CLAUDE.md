@@ -74,9 +74,10 @@ case_id, company_id, opened_at, role, situation, due_before, severity (info|atte
 finding (one plain sentence), pattern_deviated_from,
 evidence { voucher_ids[], event_ids[], document_ids[], counterparty_history_ref },
 provenance_grade, what_closes_it, status (open|closed|accepted_with_note),
+auditor_duty (none|remark|report_to_skv|notify_board),
 closed_by, closed_at, verification
 ```
-Idempotent on (role, voucher_id, finding_type). Re-runs update, never duplicate.
+Idempotent on (role, voucher_id, finding_type). Re-runs update, never duplicate. `auditor_duty` states which statutory duty the pattern would trigger for a real auditor (ABL 9:33–34 remark, 9:37 copy to Skatteverket, 9:42–44 board and prosecutor); it describes the duty, never intent.
 
 ### Delivery to the user (the subtle flow)
 - Surface only what is actionable now: near `due_before`, or when the user views the related voucher. The rest stays silent but counts toward readiness.
