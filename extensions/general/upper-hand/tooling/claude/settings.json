@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Read", "Grep", "Glob",
+      "Bash(npm test*)", "Bash(npx vitest run*)", "Bash(npm run lint*)", "Bash(npx tsc*)",
+      "Bash(npm run check:guards*)", "Bash(npm run skills:generate*)",
+      "Bash(git status*)", "Bash(git diff*)", "Bash(git log*)", "Bash(ls*)", "Bash(wc*)", "Bash(head*)"
+    ],
+    "ask": [
+      "Edit", "Write",
+      "Bash(git add*)", "Bash(git commit*)", "Bash(npm install*)", "Bash(npx supabase*)"
+    ],
+    "deny": [
+      "Bash(rm -rf*)", "Bash(rm -r*)",
+      "Bash(git push*)", "Bash(git reset --hard*)", "Bash(git checkout -- *)", "Bash(git clean*)",
+      "Bash(curl*)", "Bash(wget*)",
+      "Bash(cat .env*)", "Bash(cat ../*)", "Bash(cat /*)",
+      "Read(./.env)", "Read(./.env.*)", "Edit(./.env*)", "Write(./.env*)",
+      "Edit(./HANDOFF.md)", "Write(./HANDOFF.md)",
+      "Edit(./docs/agent-learning/retros/**)", "Edit(./docs/agent-learning/dogfooding.md)",
+      "Edit(./docs/agent-learning/sessioner.md)", "Edit(./docs/agent-learning/beslut.md)",
+      "Edit(./supabase/migrations/2*)",
+      "WebFetch",
+      "mcp__accounted__gnubok_approve_pending_operation",
+      "mcp__accounted__accounted_approve_pending_operation",
+      "mcp__accounted__gnubok_approve_supplier_invoice",
+      "mcp__accounted__accounted_approve_supplier_invoice"
+    ]
+  }
+}
