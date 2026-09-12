@@ -295,7 +295,7 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
               <div className="flex gap-2">
                 <dt className="w-28 shrink-0 text-muted-foreground">Owner</dt>
                 <dd>
-                  {selected.what_closes_it.owner ?? 'ej satt'}
+                  {selected.what_closes_it.owner ?? 'not set'}
                   {selected.what_closes_it.due_date
                     ? ` · due ${selected.what_closes_it.due_date}`
                     : ''}

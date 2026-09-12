@@ -27,7 +27,7 @@ export default function UpperHandStatusRail() {
           return (await r.json()) as PanelStatus
         })
         .then((s) => { if (!cancelled) { setStatus(s); setError(null) } })
-        .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e.message : 'Kunde inte läsa status') })
+        .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e.message : 'Could not read status') })
     load()
     const t = setInterval(load, REFRESH_MS)
     return () => { cancelled = true; clearInterval(t) }
