@@ -556,6 +556,7 @@ async function seedCustomers(ctx: CompanyCtx, seeds: CustomerSeed[]): Promise<Re
     user_id: ctx.userId,
     company_id: ctx.companyId,
     default_payment_terms: 30,
+    vat_number_validated: false,
     ...s,
   }))
   const { data, error } = await sb.from('customers').insert(rows).select('id, name')
