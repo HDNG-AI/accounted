@@ -49,6 +49,9 @@ const NEEDED_ACCOUNTS: Array<[string, string, string, string, string, string]> =
   ['2393', 'Lån från närstående personer', '2', '23', 'liability', 'credit'],
   ['5831', 'Kost och logi i utlandet', '5', '58', 'expense', 'debit'],
   ['8423', 'Räntekostnader för skatter och avgifter', '8', '84', 'expense', 'debit'],
+  ['6990', 'Övriga externa kostnader', '6', '69', 'expense', 'debit'],
+  ['6580', 'Advokat- och rättegångskostnader', '6', '65', 'expense', 'debit'],
+  ['7690', 'Övriga personalkostnader', '7', '76', 'expense', 'debit'],
 ]
 
 async function ctx(): Promise<Ctx> {
@@ -124,6 +127,30 @@ const HOLIDAY_BUYS: Array<[string, string, number, number, string]> = [
   ['2026-07-18', 'Bageri Bromma', 1260, 12, 'Lördag, semesterperiod'],
 ]
 
+type SupplierInvoicePlant = { id: string; supplier: string; country: string; vatNumber?: string; number: string; date: string; paidDate: string; subtotal: number; vat: number; account: string; text: string; fy?: string }
+async function supplierInvoice(c: Ctx, p: SupplierInvoicePlant): Promise<void> {
+  let { data: sup } = await sb.from('suppliers').select('id').eq('company_id', c.companyId).eq('name', p.supplier).maybeSingle()
+  if (!sup) {
+    const { data, error } = await sb.from('suppliers').insert({ user_id: c.userId, company_id: c.companyId, name: p.supplier, country: p.country, vat_number: p.vatNumber ?? null }).select('id').single()
+    if (error) throw new Error(`supplier ${p.supplier}: ${error.message}`); sup = data
+  }
+  const { data: mx } = await sb.from('supplier_invoices').select('arrival_number').eq('company_id', c.companyId).order('arrival_number', { ascending: false }).limit(1)
+  const total = round2(p.subtotal + p.vat)
+  const { data: si, error } = await sb.from('supplier_invoices').insert({
+    user_id: c.userId, company_id: c.companyId, supplier_id: sup!.id, arrival_number: (mx?.[0]?.arrival_number ?? 0) + 1, supplier_invoice_number: p.number,
+    invoice_date: p.date, due_date: p.paidDate, received_date: p.date, status: 'paid', currency: 'SEK',
+    subtotal: p.subtotal, subtotal_sek: p.subtotal, vat_amount: p.vat, vat_amount_sek: p.vat, total, total_sek: total,
+    vat_treatment: 'standard_25', reverse_charge: false, paid_amount: total, remaining_amount: 0, is_credit_note: false, paid_at: p.paidDate + 'T10:00:00Z',
+  }).select('id').single()
+  if (error) throw new Error(`supplier invoice ${p.number}: ${error.message}`)
+  const lines: Line[] = [{ account: p.account, debit: p.subtotal, description: p.text }, { account: '2440', credit: total, description: `Lev.skuld ${p.supplier}` }]
+  if (p.vat > 0) lines.splice(1, 0, { account: '2641', debit: p.vat, description: 'Ingående moms' })
+  const reg = await post(c, p.id, p.date, `Lev.faktura ${p.number}: ${p.supplier}`, lines, { sourceType: 'supplier_invoice_registered', sourceId: si.id })
+  const pay = await post(c, p.id, p.paidDate, `Betalning lev.faktura ${p.number}`, [{ account: '2440', debit: total }, { account: '1930', credit: total }], { sourceType: 'supplier_invoice_paid', sourceId: si.id })
+  await sb.from('supplier_invoices').update({ registration_journal_entry_id: reg, payment_journal_entry_id: pay }).eq('id', si.id)
+  ;((manifest[p.id]!.extra ??= {}))[`supplier_invoice_${p.number}`] = si.id; saveManifest()
+}
+
 const PLANTS: Record<string, (c: Ctx) => Promise<void>> = {
   // 1.4: payment of an open supplier invoice booked as a new cost with input VAT
   P1: async (c) => { await post(c, 'P1', '2026-06-03', 'Betalning WeWork juni', [
@@ -179,10 +206,18 @@ const PLANTS: Record<string, (c: Ctx) => Promise<void>> = {
     if (error) throw new Error(`rattelse: ${error.message}`)
     console.log('  A:87 corrected inline, no note:', JSON.stringify(data).slice(0, 120))
   },
-  // 9.4: Nordic Tech AS "subscription" without schedule or contract already exists; verify only
+  // 9.4: Nordic Tech AS is invoiced as a monthly subscription, no recurring schedule, no contract document
   P7: async (c) => {
-    const { count } = await sb.from('recurring_invoice_schedules').select('id', { count: 'exact', head: true }).eq('company_id', c.companyId)
-    console.log(`  Nordic Tech AS: 4 invoices 2026, recurring schedules in company: ${count ?? 0} (expected 0). Nothing to plant.`)
+    const { data: cust } = await sb.from('customers').select('id').eq('company_id', c.companyId).eq('name', 'Nordic Tech AS').single()
+    const { data: inv } = await sb.from('invoices').select('id, invoice_date').eq('company_id', c.companyId).eq('customer_id', cust!.id).gte('invoice_date', '2026-01-01')
+    let n = 0
+    for (const i of inv ?? []) {
+      const m = Number(i.invoice_date.slice(5, 7))
+      const { error } = await sb.from('invoice_items').update({ description: `Månadsabonnemang analysplattform, ${m}/2026` }).eq('invoice_id', i.id)
+      if (!error) n++
+    }
+    ;(manifest.P7 ??= { vouchers: [] }).extra = { renamed_invoices: String(n) }; saveManifest()
+    console.log(`  Nordic Tech AS: ${n} invoices now read "Månadsabonnemang analysplattform"; no schedule, no contract document`)
   },
   // Owner addition A1: consumables bought in private contexts (holidays, weekends), booked as representation, full VAT, no participants
   P8: async (c) => {
@@ -199,6 +234,14 @@ const PLANTS: Record<string, (c: Ctx) => Promise<void>> = {
   },
   // Control C4: booked late but paid on time (bank date in the text), must not be flagged
   C4: async (c) => { await post(c, 'C4', '2026-07-20', 'Inbetalning skatt + sociala 6/2026 (bankdatum 2026-07-10)', [{ account: '2710', debit: 41140 }, { account: '2731', debit: 58755 }, { account: '1930', credit: 99895 }]) },
+  // 9.3: one-offs for the normalisation list (proposed by the DD author)
+  P10: async (c) => { await supplierInvoice(c, { id: 'P10', supplier: 'Flyttfirma Stockholm AB', country: 'SE', number: 'FS-2026-0318', date: '2026-03-20', paidDate: '2026-04-10', subtotal: 45000, vat: 11250, account: '6990', text: 'Kontorsflytt Vasagatan' }) },
+  P11: async (c) => { await supplierInvoice(c, { id: 'P11', supplier: 'Advokatfirman Nord AB', country: 'SE', number: 'AN-2026-0512', date: '2026-05-12', paidDate: '2026-06-02', subtotal: 62000, vat: 15500, account: '6580', text: 'Ombud i tvist med tidigare leverantör' }) },
+  // Control C5: a recurring "one-off" (recruitment fee with the same cadence in both years) must stay off the normalisation list
+  C5: async (c) => {
+    for (const [d, pd, no] of [['2026-03-10', '2026-03-31', 'RB-2026-03'], ['2026-06-10', '2026-06-30', 'RB-2026-06'], ['2026-09-10', '2026-09-11', 'RB-2026-09']] as const)
+      await supplierInvoice(c, { id: 'C5', supplier: 'Rekryteringsbolaget AB', country: 'SE', number: no, date: d, paidDate: pd, subtotal: 30000, vat: 7500, account: '7690', text: 'Rekryteringsavgift, kvartal' })
+  },
   // Control C1: loan to the parent company, group exemption, must not be flagged
   C1: async (c) => { await post(c, 'C1', '2026-02-01', 'Lån till Konsult Holding AB', [{ account: '1660', debit: 200000, description: 'Koncernlån, ränta SLR+1 %, avtal 2026-02-01' }, { account: '1930', credit: 200000 }]) },
   // Control C3: legitimate representation on a weekday with participants documented, must not be flagged
@@ -212,12 +255,11 @@ async function main() {
     if (only && !only.has(id)) continue
     if (UNDO) {
       if (id === 'P6') { console.log('  P6 undo: restore manually through a second correction (kept simple on purpose)'); continue }
-      if (id === 'P7') continue
       console.log(`[${id}] undo`); await undoPlanted(c, id)
       if (id === 'P5' && manifest.P5?.extra?.supplier_invoice_id) { await sb.from('supplier_invoices').delete().eq('id', manifest.P5.extra.supplier_invoice_id) }
       continue
     }
-    if (id !== 'P6' && id !== 'P7' && planted(id)) { console.log(`[${id}] already planted, skipping`); continue }
+    if (id !== 'P6' && planted(id)) { console.log(`[${id}] already planted, skipping`); continue }
     console.log(`[${id}]`); await PLANTS[id](c)
   }
   console.log('done')

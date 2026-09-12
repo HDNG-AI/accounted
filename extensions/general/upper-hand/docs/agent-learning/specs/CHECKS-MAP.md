@@ -91,9 +91,9 @@ Priority 1 is the Saturday build: six checks, three per persona. Priority 2 if t
 | E1 | Existing: result disposition missing | 2099 carries 588 561 into 2026, nothing on 2091 | 4.1 |
 | E2 | Existing: depreciation missing | 1230 18 000 since 2026-02-14, no 78xx | 3.3 |
 | E3 | Existing: receivables overdue | 396 875, oldest 148 days, 82 % one customer | 9.7 |
-| P10 | Proposed, not planted: moving cost | supplier invoice 2026-03-20 "Flyttfirma Stockholm AB", "Kontorsflytt Vasagatan", 45 000 + 11 250 VAT, account 6990, one invoice from the supplier in 24 months | 9.3 |
-| P11 | Proposed, not planted: legal fee in a dispute | supplier invoice 2026-05-12 "Advokatfirman Nord AB", "Ombud i tvist med tidigare leverantör", 62 000 + 15 500 VAT, account 6580, no other invoice from the supplier | 9.3 |
-| C5 | Proposed control, not planted: recurring "one-off" | supplier invoices 2025-06-10, 2025-12-10 and 2026-03-10 "Rekryteringsbolaget AB", "Rekryteringsavgift", 30 000 + 7 500 VAT each, account 7690: same cadence in both years, run-rate, must not be on the normalisation list | 9.3 |
+| P10 | Planted 2026-09-12: moving cost | supplier invoice 2026-03-20 "Flyttfirma Stockholm AB", "Kontorsflytt Vasagatan", 45 000 + 11 250 VAT, account 6990, one invoice from the supplier in 24 months | 9.3 |
+| P11 | Planted 2026-09-12: legal fee in a dispute | supplier invoice 2026-05-12 "Advokatfirman Nord AB", "Ombud i tvist med tidigare leverantör", 62 000 + 15 500 VAT, account 6580, no other invoice from the supplier | 9.3 |
+| C5 | Planted 2026-09-12 (2026 cadence only, FY2025 is closed): recurring "one-off" | supplier invoices 2025-06-10, 2025-12-10 and 2026-03-10 "Rekryteringsbolaget AB", "Rekryteringsavgift", 30 000 + 7 500 VAT each, account 7690: same cadence in both years, run-rate, must not be on the normalisation list | 9.3 |
 
 Planting script: `scripts/plant-errors.ts`, same posting pattern as Accounted's seed script (draft, lines, posted), P6 through the correction RPC so the log is genuine, idempotent, `--undo` reverses by storno.
 

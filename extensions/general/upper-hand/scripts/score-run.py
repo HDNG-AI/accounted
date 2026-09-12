@@ -20,9 +20,8 @@ PLANTS = {
     "E3 receivables overdue":   [r"396 875", r"148 dagar", r"förfall"],
     "P9 late tax payment":      [r"5/2026", r"2026-06-24", r"8423", r"[Kk]ostnadsränta"],
     "P7 ARR without contract":  [r"Nordic Tech AS", r"14 000"],
-    # dd-9.3 has nothing planted yet. Enable when P10/P11 land (CHECKS-MAP, proposed rows):
-    # "P10 moving cost":          [r"Flyttfirma", r"Kontorsflytt", r"kontorsflytt"],
-    # "P11 legal fee in dispute": [r"Advokatfirman", r"tvist"],
+    "P10 moving cost":          [r"Flyttfirma", r"Kontorsflytt", r"kontorsflytt"],
+    "P11 legal fee in dispute": [r"Advokatfirman", r"tvist"],
 }
 CONTROLS = {
     "C1 group loan (must not flag)":   [r"1660", r"Konsult Holding"],
@@ -31,7 +30,7 @@ CONTROLS = {
     # dd-9.4 positive case: Klient AB may appear with severity in the 9.7 ageing finding, so the marker only
     # fires when the report says Klient AB lacks an agreement or a schedule.
     "C6 Klient AB recurring (must not flag as unbacked)": [r"Klient AB[^\n]{0,200}(utan|saknar|inget|ingen|ej)[^\n]{0,40}(avtal|schema|kontrakt)"],
-    # Enable when C5 in CHECKS-MAP is planted: "C5 quarterly recruitment fee (must not be a one-off)": [r"Rekryteringsbolaget"],
+    "C5 quarterly recruitment fee (must not be a one-off)": [r"Rekryteringsbolaget[^\n]{0,200}(engångs|one-off|normaliser)"],
 }
 SEVERITY = r"(blocking|blockerande|attention|åtgärd)"
 
