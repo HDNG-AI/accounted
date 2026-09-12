@@ -1,6 +1,16 @@
 # Brief: building the DD analyst
 
-For whoever takes the due-diligence persona. Everything you need is in this folder; nothing requires talking to a database directly. Read this, then the four files in section 1, then start.
+For whoever takes the due-diligence persona. The deliverable is markdown: a persona file and three check files. You can write them without running anything (section 0); running and scoring can be done by someone else.
+
+## 0. The short path: no environment, just the material
+
+You do not need keys, the demo instance or Python. The deliverable is text. Do this:
+
+1. Read the four files in section 1 (GitHub in a browser is enough: `github.com/HDNG-AI/accounted/tree/upper-hand/extensions/general/upper-hand`).
+2. Write the persona and the three checks as markdown, copying the headings from the auditor persona and the `aud-1.4` check exactly. Use the demo-company facts in section 1 as your "planted evidence" so each check names what it should hit and what it must stay silent on.
+3. Hand the files to Erik: a PR if you are comfortable with git, otherwise the files in a message. Erik or Claude runs the persona loop and the scorer against the demo company and sends you the output. You adjust, we run again. Two or three rounds is normal.
+
+Sections 3 and 4 below describe the full path for whoever runs it; you can skip them.
 
 ## 1. What already exists (read in this order, 20 minutes)
 
