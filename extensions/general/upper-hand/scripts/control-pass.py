@@ -72,7 +72,11 @@ def main():
             data = {"kontroll": kontroll, "rapport_sv": rm.group(1).replace('\\n', '\n').replace('\\"', '"')}
             print("[control] JSON repaired by field extraction", file=sys.stderr)
     k = data.get("kontroll", [])
-    problems = gate(data.get("rapport_sv", ""))
+    # gemma4 occasionally swaps digits to Arabic-Indic or Persian numerals; that is a deterministic fix, not a language failure
+    digits = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789")
+    rep = data.get("rapport_sv", "")
+    if rep != rep.translate(digits): print("[control] normalised non-ASCII digits in the report", file=sys.stderr); rep = rep.translate(digits); data["rapport_sv"] = rep
+    problems = gate(rep)
     print(f"[control] model={MODEL} prompt={u.get('prompt_tokens')} completion={u.get('completion_tokens')} findings={len(k)} "
           f"godkänt={sum(1 for x in k if x.get('status')=='godkänt')} nedgraderat={sum(1 for x in k if x.get('status')=='nedgraderat')} "
           f"avvisat={sum(1 for x in k if x.get('status')=='avvisat')} gate={'OK' if not problems else 'FAIL ' + '; '.join(problems)}", file=sys.stderr)
