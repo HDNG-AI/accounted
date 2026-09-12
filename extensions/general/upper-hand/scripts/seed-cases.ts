@@ -63,8 +63,8 @@ async function main() {
       check_id: 'voucher-without-document',
       severity: 'blocking',
       due_before: '2026-10-01',
-      finding: 'Verifikat A:124 saknar underlag och står kvar som leverantörsskuld',
-      pattern_deviated_from: 'Varje verifikat ska bära ett länkat underlag.',
+      finding: 'Voucher A:124 has no supporting document and the supplier liability remains open',
+      pattern_deviated_from: 'Every voucher carries a linked supporting document.',
       evidence: {
         voucher_ids: [],
         event_ids: [],
@@ -80,8 +80,8 @@ async function main() {
       check_id: 'tax-foreign-receipt-local-vat',
       severity: 'attention',
       due_before: '2026-11-12',
-      finding: 'Tysk hotellfaktura med lokal moms bokförd som svensk ingående moms',
-      pattern_deviated_from: 'Utländsk moms är inte avdragsgill som svensk ingående moms.',
+      finding: 'German hotel invoice with local VAT booked as Swedish input VAT',
+      pattern_deviated_from: 'Foreign VAT is not deductible as Swedish input VAT.',
       evidence: {
         voucher_ids: [],
         event_ids: [],
@@ -97,8 +97,8 @@ async function main() {
       check_id: 'supplier-invoice-unpaid',
       severity: 'info',
       due_before: null,
-      finding: 'Leverantörsfaktura WeWork godkänd men obetald sedan 2026-06-01',
-      pattern_deviated_from: 'Godkänd faktura förfaller och ska betalas eller krediteras.',
+      finding: 'WeWork supplier invoice approved but unpaid since 2026-06-01',
+      pattern_deviated_from: 'An approved invoice falls due and is paid or credited.',
       evidence: {
         voucher_ids: [],
         event_ids: [],

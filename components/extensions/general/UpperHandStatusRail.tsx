@@ -11,7 +11,7 @@ const REFRESH_MS = 15_000
 function fmtTime(iso: string | null | undefined): string {
   if (!iso) return ''
   const d = new Date(iso)
-  return d.toLocaleString('sv-SE', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })
+  return d.toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })
 }
 
 export default function UpperHandStatusRail() {
@@ -34,7 +34,7 @@ export default function UpperHandStatusRail() {
   }, [])
 
   return (
-    <section aria-label="Granskare" className="rounded-none border-2 border-foreground bg-card">
+    <section aria-label="Reviewers" className="rounded-none border-2 border-foreground bg-card">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-foreground px-4 py-2">
         <div className="flex items-center gap-3 text-xs">
           <span className="inline-flex items-center gap-2 font-mono uppercase tracking-[0.12em] text-muted-foreground">
@@ -45,22 +45,22 @@ export default function UpperHandStatusRail() {
                 status?.live ? 'animate-pulse bg-lime-300' : 'bg-transparent'
               )}
             />
-            {status?.live ? 'Granskning pågår' : 'Granskare i vila'}
+            {status?.live ? 'Review in progress' : 'Reviewers idle'}
           </span>
           {status && (
             <span className="font-mono text-muted-foreground">
-              {status.models.analysis} analys · {status.models.control} kontroll · {status.models.provider}
+              {status.models.analysis} analysis · {status.models.control} control · {status.models.provider}
             </span>
           )}
         </div>
-        <span className="font-mono text-xs text-muted-foreground">{status?.access ?? (error ? `Status: ${error}` : 'Läser status…')}</span>
+        <span className="font-mono text-xs text-muted-foreground">{status?.access ?? (error ? `Status: ${error}` : 'Reading status…')}</span>
       </div>
       <div className="grid gap-px bg-foreground sm:grid-cols-3">
         {(status?.personas ?? []).map((p) => (
           <div key={p.id} className="bg-card px-4 py-3">
             <div className="flex items-baseline justify-between gap-2">
               <span className="text-sm font-semibold">{p.title}</span>
-              <span className="font-mono text-xs text-muted-foreground">{p.checks.length} kontroller</span>
+              <span className="font-mono text-xs text-muted-foreground">{p.checks.length} checks</span>
             </div>
             <div className="mt-2 flex flex-wrap gap-1">
               {p.checks.map((c) => (
@@ -71,15 +71,15 @@ export default function UpperHandStatusRail() {
             </div>
             <p className="mt-2 font-mono text-xs text-muted-foreground">
               {p.live
-                ? `Kör sedan ${fmtTime(p.last_run?.started_at)}`
+                ? `Running since ${fmtTime(p.last_run?.started_at)}`
                 : p.last_run
-                  ? `Senast ${fmtTime(p.last_run.finished_at ?? p.last_run.started_at)} · ${p.last_run.turns ?? '–'} turer · ${p.last_run.tool_calls ?? '–'} anrop · ${p.last_run.findings ?? '–'} fynd${p.last_run.gate_ok === false ? ' · språkgate stoppade' : ''}`
-                  : 'Ingen körning registrerad'}
+                  ? `Last ${fmtTime(p.last_run.finished_at ?? p.last_run.started_at)} · ${p.last_run.turns ?? '–'} turns · ${p.last_run.tool_calls ?? '–'} tool calls · ${p.last_run.findings ?? '–'} findings${p.last_run.gate_ok === false ? ' · language gate stopped it' : ''}`
+                  : 'No run recorded'}
             </p>
           </div>
         ))}
         {status && status.personas.length === 0 && (
-          <div className="bg-card px-4 py-3 text-sm text-muted-foreground">Inga personas hittades i skills/personas.</div>
+          <div className="bg-card px-4 py-3 text-sm text-muted-foreground">No personas found in skills/personas.</div>
         )}
       </div>
     </section>

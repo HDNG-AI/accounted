@@ -19,11 +19,11 @@ import type {
 const API_BASE = '/api/extensions/ext/upper-hand'
 
 const STATUS_LABEL: Record<UpperHandCaseStatus, string> = {
-  open: 'Öppen',
-  acknowledged: 'Under åtgärd',
-  accepted_with_note: 'Accepterad med not',
-  closed: 'Stängd',
-  reopened: 'Återöppnad',
+  open: 'Open',
+  acknowledged: 'Being handled',
+  accepted_with_note: 'Accepted with note',
+  closed: 'Closed',
+  reopened: 'Reopened',
 }
 
 const STATUS_VARIANT: Record<
@@ -39,7 +39,7 @@ const STATUS_VARIANT: Record<
 
 const SEVERITY_LABEL: Record<UpperHandSeverity, string> = {
   info: 'info',
-  attention: 'åtgärd',
+  attention: 'attention',
   blocking: 'blockerande',
 }
 
@@ -88,7 +88,7 @@ async function apiRequest<T>(path: string, body?: unknown): Promise<T> {
   const payload = await response.json().catch(() => ({}))
   if (!response.ok) {
     const message =
-      (payload as { error?: { message?: string } }).error?.message ?? 'Något gick fel.'
+      (payload as { error?: { message?: string } }).error?.message ?? 'Something went wrong.'
     throw new Error(message)
   }
   return (payload as { data: T }).data
@@ -117,7 +117,7 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
       .then((data) => {
         setSelectedId((current) => current ?? data[0]?.case_id ?? null)
       })
-      .catch((err: unknown) => setError(getErrorMessage(err) || 'Kunde inte läsa ärenden.'))
+      .catch((err: unknown) => setError(getErrorMessage(err) || 'Could not read cases.'))
       .finally(() => setLoading(false))
   }, [refresh])
 
@@ -145,14 +145,14 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
         await apiRequest(path, body ?? {})
         const data = await refresh()
         if (action === 'rerun') {
-          setMessage('Omkörningen är klar. Ärendet stängs bara om mönstret inte längre kvarstår.')
+          setMessage('Re-run complete. The case closes only if the pattern no longer holds.')
         }
         setSelectedId((current) => {
           if (current) return current
           return data.find((c) => !isResolved(c))?.case_id ?? data[0]?.case_id ?? null
         })
       } catch (err: unknown) {
-        setError(getErrorMessage(err) || 'Åtgärden misslyckades.')
+        setError(getErrorMessage(err) || 'The action failed.')
       } finally {
         setBusyAction(null)
       }
@@ -166,7 +166,7 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Revisionsredo</CardTitle>
+            <CardTitle className="text-sm">Audit-ready</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
             <p className="font-display text-3xl tabular-nums">
@@ -174,28 +174,28 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
               <span className="text-base text-muted-foreground"> /100</span>
             </p>
             <p className="text-xs text-muted-foreground">
-              Viktat på allvar bland öppna ärenden. Stänger du ett blockerande ärende stiger siffran.
+              Weighted by severity across open cases. Closing a blocking case raises the number.
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Öppna ärenden</CardTitle>
+            <CardTitle className="text-sm">Open cases</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
             <p className="font-display text-3xl tabular-nums">{openCases.length}</p>
             <p className="text-xs text-muted-foreground">
-              {openCases.filter((c) => c.severity === 'blocking').length} blockerande
+              {openCases.filter((c) => c.severity === 'blocking').length} blocking
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Stängda och avskrivna</CardTitle>
+            <CardTitle className="text-sm">Closed and accepted</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
             <p className="font-display text-3xl tabular-nums">{resolvedCases.length}</p>
-            <p className="text-xs text-muted-foreground">Historiken bevaras för varje ärende.</p>
+            <p className="text-xs text-muted-foreground">History is kept for every case.</p>
           </CardContent>
         </Card>
       </div>
@@ -209,7 +209,7 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Öppna ärenden</CardTitle>
+          <CardTitle className="text-sm">Open cases</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -219,17 +219,17 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
             </div>
           ) : openCases.length === 0 ? (
             <p className="p-6 text-[13px] text-muted-foreground">
-              Inga öppna ärenden. Granskarna har inte hittat något som kräver åtgärd.
+              No open cases. The reviewers have found nothing that needs action.
             </p>
           ) : (
             <table className="w-full border-collapse text-[13px]">
               <thead>
                 <tr>
-                  <th className={TH_CLASS}>Roll</th>
-                  <th className={TH_CLASS}>Allvar</th>
-                  <th className={TH_CLASS}>Fynd</th>
+                  <th className={TH_CLASS}>Role</th>
+                  <th className={TH_CLASS}>Severity</th>
+                  <th className={TH_CLASS}>Finding</th>
                   <th className={TH_CLASS}>Status</th>
-                  <th className={TH_CLASS}>Uppdaterad</th>
+                  <th className={TH_CLASS}>Updated</th>
                 </tr>
               </thead>
               <tbody>
@@ -253,7 +253,7 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
                     <td className={TD_CLASS}>
                       {upperHandCase.finding}
                       {upperHandCase.needs_recheck ? (
-                        <span className="ml-2 text-[11px] text-attn">· omkörning rekommenderas</span>
+                        <span className="ml-2 text-[11px] text-attn">· re-run recommended</span>
                       ) : null}
                     </td>
                     <td className={cn(TD_CLASS, 'whitespace-nowrap')}>
@@ -285,28 +285,28 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
           <CardContent className="space-y-6">
             <dl className="grid gap-x-6 gap-y-2 text-[13px] sm:grid-cols-2">
               <div className="flex gap-2">
-                <dt className="w-28 shrink-0 text-muted-foreground">Roll</dt>
+                <dt className="w-28 shrink-0 text-muted-foreground">Role</dt>
                 <dd>{selected.role}</dd>
               </div>
               <div className="flex gap-2">
-                <dt className="w-28 shrink-0 text-muted-foreground">Allvar</dt>
+                <dt className="w-28 shrink-0 text-muted-foreground">Severity</dt>
                 <dd>{SEVERITY_LABEL[selected.severity]}</dd>
               </div>
               <div className="flex gap-2">
-                <dt className="w-28 shrink-0 text-muted-foreground">Ansvarig</dt>
+                <dt className="w-28 shrink-0 text-muted-foreground">Owner</dt>
                 <dd>
                   {selected.what_closes_it.owner ?? 'ej satt'}
                   {selected.what_closes_it.due_date
-                    ? ` · förfaller ${selected.what_closes_it.due_date}`
+                    ? ` · due ${selected.what_closes_it.due_date}`
                     : ''}
                 </dd>
               </div>
               <div className="flex gap-2">
-                <dt className="w-28 shrink-0 text-muted-foreground">Kontroll</dt>
+                <dt className="w-28 shrink-0 text-muted-foreground">Check</dt>
                 <dd>{selected.check_id}</dd>
               </div>
               <div className="flex gap-2 sm:col-span-2">
-                <dt className="w-28 shrink-0 text-muted-foreground">Avviker från</dt>
+                <dt className="w-28 shrink-0 text-muted-foreground">Deviates from</dt>
                 <dd>{selected.pattern_deviated_from}</dd>
               </div>
             </dl>
@@ -315,8 +315,8 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
               <div className="rounded-lg border border-border bg-card p-3 text-[12.5px]">
                 <b>
                   {selected.status === 'closed'
-                    ? 'Stängd efter omkörning'
-                    : 'Accepterad med not'}
+                    ? 'Closed after re-run'
+                    : 'Accepted with note'}
                 </b>
                 <p className="mt-1 text-muted-foreground">{selected.verification}</p>
                 <Button
@@ -326,23 +326,23 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
                   disabled={busyAction !== null}
                   onClick={() => run('reopen', `/cases/${selected.case_id}/reopen`)}
                 >
-                  Återöppna
+                  Reopen
                 </Button>
               </div>
             ) : (
               <div className="space-y-4 rounded-lg border border-border bg-muted/40 p-4">
                 <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
                   <label className="grid gap-1 text-[11px] uppercase tracking-[0.07em] text-muted-foreground">
-                    Ansvarig
+                    Owner
                     <input
                       className="h-8 rounded-lg border border-border bg-card px-3 text-[13px] normal-case tracking-normal text-foreground"
                       value={owner}
                       onChange={(event) => setOwner(event.target.value)}
-                      placeholder="namn eller roll"
+                      placeholder="name or role"
                     />
                   </label>
                   <label className="grid gap-1 text-[11px] uppercase tracking-[0.07em] text-muted-foreground">
-                    Förfaller
+                    Due
                     <input
                       type="date"
                       className="h-8 rounded-lg border border-border bg-card px-3 text-[13px] text-foreground"
@@ -359,7 +359,7 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
                       })
                     }
                   >
-                    Ange ansvarig
+                    Set owner
                   </Button>
                 </div>
 
@@ -368,17 +368,17 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
                     disabled={busyAction !== null}
                     onClick={() => run('rerun', `/cases/${selected.case_id}/rerun`)}
                   >
-                    Kör om granskaren
+                    Re-run the reviewer
                   </Button>
                   <Button
                     variant="outline"
                     disabled={busyAction !== null}
                     onClick={() => setShowAccept((value) => !value)}
                   >
-                    Acceptera med not
+                    Accept with note
                   </Button>
                   <span className="text-[12px] text-muted-foreground">
-                    Ett ärende stängs först när en omkörning bekräftar att mönstret inte kvarstår.
+                    A case closes only when a re-run confirms the pattern no longer holds.
                   </span>
                 </div>
 
@@ -390,7 +390,7 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
                         className="min-h-16 rounded-lg border border-border bg-card p-2 text-[13px] normal-case tracking-normal text-foreground"
                         value={note}
                         onChange={(event) => setNote(event.target.value)}
-                        placeholder="varför avvikelsen accepteras och vem som beslutat"
+                        placeholder="why the deviation is accepted and who decided"
                       />
                     </label>
                     <Button
@@ -399,7 +399,7 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
                         run('accept', `/cases/${selected.case_id}/accept`, { note })
                       }
                     >
-                      Bekräfta acceptera med not
+                      Confirm accept with note
                     </Button>
                   </div>
                 ) : null}
@@ -408,31 +408,31 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
 
             <div className="space-y-2">
               <h3 className="text-[11px] font-medium uppercase tracking-[0.07em] text-muted-foreground">
-                Beviskedja
+                Evidence chain
               </h3>
               <table className="w-full border-collapse text-[12.5px]">
                 <thead>
                   <tr>
-                    <th className={TH_CLASS}>Typ</th>
-                    <th className={TH_CLASS}>Referens</th>
+                    <th className={TH_CLASS}>Type</th>
+                    <th className={TH_CLASS}>Reference</th>
                   </tr>
                 </thead>
                 <tbody>
                   {selected.evidence.voucher_ids.map((id) => (
                     <tr key={`v-${id}`}>
-                      <td className={TD_CLASS}>verifikat</td>
+                      <td className={TD_CLASS}>voucher</td>
                       <td className={cn(TD_CLASS, 'font-mono')}>{id}</td>
                     </tr>
                   ))}
                   {selected.evidence.document_ids.map((id) => (
                     <tr key={`d-${id}`}>
-                      <td className={TD_CLASS}>dokument</td>
+                      <td className={TD_CLASS}>document</td>
                       <td className={cn(TD_CLASS, 'font-mono')}>{id}</td>
                     </tr>
                   ))}
                   {selected.evidence.event_ids.map((id) => (
                     <tr key={`e-${id}`}>
-                      <td className={TD_CLASS}>händelse</td>
+                      <td className={TD_CLASS}>event</td>
                       <td className={cn(TD_CLASS, 'font-mono')}>{id}</td>
                     </tr>
                   ))}
@@ -442,7 +442,7 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
 
             <div className="space-y-2">
               <h3 className="text-[11px] font-medium uppercase tracking-[0.07em] text-muted-foreground">
-                Historik
+                History
               </h3>
               <ul className="space-y-1 text-[12.5px]">
                 {[...selected.history].reverse().map((entry, index) => (
@@ -466,7 +466,7 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
       {resolvedCases.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Stängda och avskrivna</CardTitle>
+            <CardTitle className="text-sm">Closed and accepted</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {resolvedCases.map((upperHandCase) => (
@@ -488,7 +488,7 @@ export default function UpperHandWorkspace(_props: WorkspaceComponentProps) {
                   disabled={busyAction !== null}
                   onClick={() => run('reopen', `/cases/${upperHandCase.case_id}/reopen`)}
                 >
-                  Återöppna
+                  Reopen
                 </Button>
               </div>
             ))}

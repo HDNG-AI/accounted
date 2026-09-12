@@ -18,11 +18,11 @@ export const ALLOWED_TRANSITIONS: Record<UpperHandCaseStatus, UpperHandCaseStatu
 }
 
 const TRANSITION_ACTION: Record<UpperHandCaseStatus, string> = {
-  open: 'Återöppnat',
-  acknowledged: 'Ansvarig satt',
-  accepted_with_note: 'Accepterat med not',
-  closed: 'Stängt efter omkörning',
-  reopened: 'Återöppnat',
+  open: 'Reopened',
+  acknowledged: 'Owner set',
+  accepted_with_note: 'Accepted with note',
+  closed: 'Closed after re-run',
+  reopened: 'Reopened',
 }
 
 const SEVERITY_RANK: Record<UpperHandSeverity, number> = {
@@ -218,7 +218,7 @@ export function buildCase(
       {
         at,
         by: 'system',
-        action: 'Ärende öppnat',
+        action: 'Case opened',
         from: 'open',
         to: 'open',
         note: null,

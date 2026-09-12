@@ -20,6 +20,8 @@ for line in open(os.path.join(ROOT, ".env")):
         k, v = line.strip().split("=", 1); os.environ.setdefault(k, v)
 STAIK = os.environ["STAIK_API_KEY"]
 MODEL = os.environ.get("CONTROL_MODEL", "gemma4:31b")
+OUTPUT_LANG = os.environ.get("OUTPUT_LANG", "en")
+LANG_NAME = {"en": "English", "sv": "Swedish"}.get(OUTPUT_LANG, "English")
 
 SYSTEM = """You are the control and language step of a review panel for Swedish company ledgers. You receive an analysis written by another model. You never add findings and never soften evidence. Your job:
 
@@ -27,11 +29,11 @@ SYSTEM = """You are the control and language step of a review panel for Swedish 
    - godkänt: it names concrete evidence (voucher numbers like A:124 or ids, document ids, amounts, dates), a severity (info | attention | blocking), and what closes it.
    - nedgraderat: evidence is present but the severity is not justified by the finding's own facts, or the closing action lacks owner or date. State the corrected severity.
    - avvisat: no concrete evidence, or the finding asserts intent (fraud, embezzlement, misconduct, bedrägeri, förskingring, oegentlighet, uppsåt), or it contradicts the evidence it cites.
-2. Rewrite the approved and downgraded findings for the end user in Swedish: correct, plain business Swedish, no anglicisms, no exclamation marks, no superlatives, only Latin letters, thousands separated by space (25 000 kr), dates YYYY-MM-DD, percent with a space. Keep every id, amount and date exactly as in the analysis. Describe deviations and patterns, never intent.
+2. Rewrite the approved and downgraded findings for the end user in {LANG}: correct, plain business language, no exclamation marks, no superlatives, only Latin letters, amounts as 25 000 kr, dates YYYY-MM-DD, percent with a space. Keep every id, amount and date exactly as in the analysis. Describe deviations and patterns, never intent.
 
 Return ONLY this JSON, nothing else:
 {"kontroll":[{"nr":1,"rubrik":"...","status":"godkänt|nedgraderat|avvisat","allvar":"info|attention|blocking","skal":"..."}],
- "rapport_sv":"...markdown in Swedish, one section per approved or downgraded finding, then a section Ej verifierat..."}"""
+ "rapport_sv":"...markdown in {LANG}, one section per approved or downgraded finding, then a section on what could not be verified..."}"""
 
 def chat(messages):
     body = {"model": MODEL, "messages": messages, "stream": False, "max_tokens": 6000, "temperature": 0.1}
@@ -44,7 +46,8 @@ def gate(text):
     problems = []
     foreign = sorted(set(ch for ch in text if not ALLOWED.match(ch)))
     if foreign: problems.append(f"främmande tecken: {foreign[:8]}")
-    if re.search(r"\b(the|and|with|because|however|finding|evidence)\b", text): problems.append("engelska ord i användartext")
+    if OUTPUT_LANG == "sv" and re.search(r"\b(the|and|with|because|however|finding|evidence)\b", text): problems.append("engelska ord i användartext")
+    if OUTPUT_LANG == "en" and re.search(r"\b(och|eller|inte|verifikat|fordran|saknas)\b", text): problems.append("Swedish words in English user text")
     if re.search(r"\b(bedrägeri|förskingring|oegentlighet|uppsåt|fraud|embezzl)", text, re.I): problems.append("avsiktsvokabulär")
     if "!" in text: problems.append("utropstecken")
     return problems
@@ -52,7 +55,7 @@ def gate(text):
 def main():
     path = sys.argv[1]; want_json = "--json" in sys.argv
     analysis = open(path, encoding="utf-8").read()
-    resp = chat([{"role": "system", "content": SYSTEM}, {"role": "user", "content": "Analys att kontrollera:\n\n" + analysis}])
+    resp = chat([{"role": "system", "content": SYSTEM.replace("{LANG}", LANG_NAME)}, {"role": "user", "content": "Analysis to check:\n\n" + analysis}])
     content = resp["choices"][0]["message"]["content"] or ""
     u = resp.get("usage", {})
     content = re.sub(r"^\s*```(?:json)?\s*|\s*```\s*$", "", content.strip())

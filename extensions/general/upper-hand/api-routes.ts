@@ -35,7 +35,7 @@ async function requireWritableContext(
   ctx: ExtensionContext | undefined
 ): Promise<Response | null> {
   if (!ctx) {
-    return errorResponse('NO_CONTEXT', 'Extension context saknas.', 500)
+    return errorResponse('NO_CONTEXT', 'Extension context is missing.', 500)
   }
   const permission = await requireWritePermission(ctx.supabase, ctx.userId, {
     companyId: ctx.companyId,
@@ -54,7 +54,7 @@ async function loadCaseOr404(
 ): Promise<{ upperHandCase: UpperHandCase } | { response: Response }> {
   const upperHandCase = await getCase(ctx.supabase, ctx.companyId, caseId)
   if (!upperHandCase) {
-    return { response: errorResponse('CASE_NOT_FOUND', `Ärendet ${caseId} hittades inte.`, 404) }
+    return { response: errorResponse('CASE_NOT_FOUND', `Case ${caseId} was not found.`, 404) }
   }
   return { upperHandCase }
 }
@@ -67,7 +67,7 @@ async function handleListCases(
   _request: Request,
   ctx?: ExtensionContext
 ): Promise<Response> {
-  if (!ctx) return errorResponse('NO_CONTEXT', 'Extension context saknas.', 500)
+  if (!ctx) return errorResponse('NO_CONTEXT', 'Extension context is missing.', 500)
   const cases = await listCases(ctx.supabase, ctx.companyId)
   return NextResponse.json({ data: cases })
 }
@@ -81,11 +81,11 @@ async function handleAcknowledge(
   const context = ctx as ExtensionContext
 
   const caseId = await readCaseId(request)
-  if (!caseId) return errorResponse('CASE_ID_REQUIRED', 'Ärendets id saknas.', 400)
+  if (!caseId) return errorResponse('CASE_ID_REQUIRED', 'Case id is missing.', 400)
 
   const parsed = acknowledgeSchema.safeParse(await request.json().catch(() => ({})))
   if (!parsed.success) {
-    return errorResponse('INVALID_BODY', 'Ange ansvarig eller förfallodatum.', 400)
+    return errorResponse('INVALID_BODY', 'Provide an owner or a due date.', 400)
   }
 
   const loaded = await loadCaseOr404(context, caseId)
@@ -116,11 +116,11 @@ async function handleAccept(
   const context = ctx as ExtensionContext
 
   const caseId = await readCaseId(request)
-  if (!caseId) return errorResponse('CASE_ID_REQUIRED', 'Ärendets id saknas.', 400)
+  if (!caseId) return errorResponse('CASE_ID_REQUIRED', 'Case id is missing.', 400)
 
   const parsed = acceptSchema.safeParse(await request.json().catch(() => ({})))
   if (!parsed.success) {
-    return errorResponse('NOTE_REQUIRED', 'En not på minst 8 tecken krävs.', 400)
+    return errorResponse('NOTE_REQUIRED', 'A note of at least 8 characters is required.', 400)
   }
 
   const loaded = await loadCaseOr404(context, caseId)
@@ -150,7 +150,7 @@ async function handleReopen(
   const context = ctx as ExtensionContext
 
   const caseId = await readCaseId(request)
-  if (!caseId) return errorResponse('CASE_ID_REQUIRED', 'Ärendets id saknas.', 400)
+  if (!caseId) return errorResponse('CASE_ID_REQUIRED', 'Case id is missing.', 400)
 
   const loaded = await loadCaseOr404(context, caseId)
   if ('response' in loaded) return loaded.response
@@ -178,7 +178,7 @@ async function handleRerun(
   const context = ctx as ExtensionContext
 
   const caseId = await readCaseId(request)
-  if (!caseId) return errorResponse('CASE_ID_REQUIRED', 'Ärendets id saknas.', 400)
+  if (!caseId) return errorResponse('CASE_ID_REQUIRED', 'Case id is missing.', 400)
 
   const loaded = await loadCaseOr404(context, caseId)
   if ('response' in loaded) return loaded.response
@@ -198,7 +198,7 @@ async function handleRerun(
 }
 
 async function handleStatus(_request: Request, ctx?: ExtensionContext): Promise<Response> {
-  if (!ctx) return errorResponse('NO_CONTEXT', 'Extension context saknas.', 500)
+  if (!ctx) return errorResponse('NO_CONTEXT', 'Extension context is missing.', 500)
   const runs = await listRuns(ctx.supabase, ctx.companyId)
   const personas = listPersonas().map((p) => {
     const last = runs.find((r) => r.persona === p.id) ?? null
@@ -208,7 +208,7 @@ async function handleStatus(_request: Request, ctx?: ExtensionContext): Promise<
     personas,
     live: personas.some((p) => p.live),
     models: { analysis: 'qwen3.6:35b-a3b', control: 'gemma4:31b', provider: 'Staik · SE' },
-    access: 'Läsnyckel: inga skrivverktyg exponerade',
+    access: 'Read-only key: no write tools exposed',
     generated_at: new Date().toISOString(),
   }
   return NextResponse.json(status)

@@ -42,8 +42,8 @@ const voucherWithoutDocument: RecheckFn = async (supabase, upperHandCase) => {
 
   return {
     resolved: true,
-    verification: `Omkörning: samtliga ${voucherIds.length} verifikat i beviskedjan har nu ett länkat underlag.`,
-    checked: [`${linked.size} länkade dokument`],
+    verification: `Re-run: all ${voucherIds.length} vouchers in the evidence chain now a linked supporting document.`,
+    checked: [`${linked.size} linked documents`],
   }
 }
 
@@ -60,7 +60,7 @@ export async function recheckCase(
     return {
       resolved: false,
       verification: null,
-      checked: [`ingen omkörning implementerad för ${upperHandCase.check_id}`],
+      checked: [`no re-run implemented for ${upperHandCase.check_id}`],
     }
   }
   return recheck(supabase, upperHandCase)
