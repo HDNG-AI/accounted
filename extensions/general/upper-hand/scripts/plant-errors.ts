@@ -48,6 +48,7 @@ const NEEDED_ACCOUNTS: Array<[string, string, string, string, string, string]> =
   ['1790', 'Övriga förutbetalda kostnader och upplupna intäkter', '1', '17', 'asset', 'debit'],
   ['2393', 'Lån från närstående personer', '2', '23', 'liability', 'credit'],
   ['5831', 'Kost och logi i utlandet', '5', '58', 'expense', 'debit'],
+  ['8423', 'Räntekostnader för skatter och avgifter', '8', '84', 'expense', 'debit'],
 ]
 
 async function ctx(): Promise<Ctx> {
@@ -191,6 +192,13 @@ const PLANTS: Record<string, (c: Ctx) => Promise<void>> = {
         { account: '6071', debit: net, description: `${who} (${ctxt})` }, { account: '2641', debit: vat, description: 'Ingående moms' }, { account: '1930', credit: total }])
     }
   },
+  // ABL 9:34: employer charges for May paid twelve days late, with cost interest on the tax account
+  P9: async (c) => {
+    await post(c, 'P9', '2026-06-24', 'Inbetalning skatt + sociala 5/2026', [{ account: '2710', debit: 41140 }, { account: '2731', debit: 58755 }, { account: '1930', credit: 99895 }])
+    await post(c, 'P9', '2026-07-03', 'Kostnadsränta skattekonto', [{ account: '8423', debit: 240, description: 'Kostnadsränta, sen inbetalning 5/2026' }, { account: '1930', credit: 240 }])
+  },
+  // Control C4: booked late but paid on time (bank date in the text), must not be flagged
+  C4: async (c) => { await post(c, 'C4', '2026-07-20', 'Inbetalning skatt + sociala 6/2026 (bankdatum 2026-07-10)', [{ account: '2710', debit: 41140 }, { account: '2731', debit: 58755 }, { account: '1930', credit: 99895 }]) },
   // Control C1: loan to the parent company, group exemption, must not be flagged
   C1: async (c) => { await post(c, 'C1', '2026-02-01', 'Lån till Konsult Holding AB', [{ account: '1660', debit: 200000, description: 'Koncernlån, ränta SLR+1 %, avtal 2026-02-01' }, { account: '1930', credit: 200000 }]) },
   // Control C3: legitimate representation on a weekday with participants documented, must not be flagged

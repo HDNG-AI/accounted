@@ -18,10 +18,12 @@ PLANTS = {
     "E1 result disposition":    [r"2099", r"2091", r"disposition"],
     "E2 depreciation missing":  [r"1230", r"avskrivning", r"Avskrivning"],
     "E3 receivables overdue":   [r"396 875", r"148 dagar", r"förfall"],
+    "P9 late tax payment":      [r"5/2026", r"2026-06-24", r"8423", r"[Kk]ostnadsränta"],
 }
 CONTROLS = {
     "C1 group loan (must not flag)":   [r"1660", r"Konsult Holding"],
     "C3 kick-off fika (must not flag)":[r"Kick-off", r"kick-off", r"A:147"],
+    "C4 booked late, paid on time (must not flag)":[r"6/2026", r"bankdatum 2026-07-10"],
 }
 SEVERITY = r"(blocking|blockerande|attention|åtgärd)"
 

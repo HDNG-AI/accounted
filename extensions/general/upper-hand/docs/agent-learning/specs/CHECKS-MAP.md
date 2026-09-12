@@ -90,7 +90,7 @@ Planting script: `scripts/plant-errors.ts`, same posting pattern as Accounted's 
 
 | Id | Function | Persona | Check id | Accounted data | Konsult AB | Saturday |
 |---|---|---|---|---|---|---|
-| ABL 9:34 | Taxes and charges paid late: the most common remark in SME audit reports | auditor, tax | `aud-9.34-tax-account-late` | 1630, 2650, 2710, 2731, 8423, 6992, declaration status | five manual tax payments exist (A:112–A:123 in the seed); no late ones planted yet | **1** |
+| ABL 9:34 | Taxes and charges paid late: the most common remark in SME audit reports | auditor, tax | `aud-9.34-tax-account-late` | 1630, 2650, 2710, 2731, 8423, 6992, declaration status | **plant P9**: May charges paid 2026-06-24 (due 06-12) plus 240 kr cost interest on 8423; **control C4**: June charges booked 07-20 with bank date 07-10 in the text | **1** |
 | ABL 25:13 | Equity below half the share capital, kontrollbalansräkning | auditor, credit | `aud-25.13-equity-half` | balance sheet per month, 2081, 20xx, documents | Konsult AB is profitable: control (no finding) | control |
 
 Persona changes from the research: materiality set per company with FAR spans and stated in every case; first five questions in RI's order; `auditor_duty` on the case object (none, remark, report_to_skv, notify_board); evidence must be something the auditor has seen (RI discipline pattern); standards referenced by number, never quoted (licensing).
