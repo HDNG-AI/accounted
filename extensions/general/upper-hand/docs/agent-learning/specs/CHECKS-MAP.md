@@ -41,9 +41,9 @@ These go into every persona and every check.
 | 5.5 | Written explanation for changed vouchers in a closed year | compliance | `compl-5.5-change-note` | `journal_entry_rattelse_log.notes` | **plant**: strike a line on A:87 without a note | 2 |
 | 7.1 | Budget vs actual with principle check | controller | needs budget connector | | mock | later |
 | 7.3 | Cash runway from burn, receivables, VAT receivable | credit | `credit-7.3-runway` | bank balance, AR aging, 1650 | AR all overdue: 396 875 | 2 |
-| 9.3 | Normalisation list for QoE, one invoice per line | DD | `dd-9.3-normalisations` | `supplier_invoices` by category | plant two one-offs later | later |
-| 9.4 | Revenue and margin per product group and customer | DD | `dd-9.4-arr-backed` | `recurring_invoice_schedules`, `invoices`, contract documents | **plant**: Nordic Tech AS "subscription" without schedule or contract | 2 |
-| 9.7 | Aging of receivables and payables with comment per large item | DD, credit | `dd-9.7-aging` | `invoices`, `supplier_invoices` | already present: Klient AB 148 days | **1** |
+| 9.3 | Normalisation list for QoE, one invoice per line | DD | `dd-9.3-normalisations` | `supplier_invoices`, `query_journal` line text, `suppliers`, income statement | none today (expected result: "Ingen avvikelse" with the population checked); proposed plants P9, P10 and control C4 below | **built** |
+| 9.4 | Revenue and margin per product group and customer | DD | `dd-9.4-arr-backed` | `recurring_invoice_schedules`, `invoices` + `get_invoice` items, agreement documents, `customers` | **present (P7)**: Nordic Tech AS fixed 14 000 per month, 16 invoices 2025-01 to 2026-04, no schedule, no agreement document. Positive case Klient AB: hour-based lines, paid within 14 days in 2025, must stay silent | **built** |
+| 9.7 | Aging of receivables and payables with comment per large item | DD, credit | `dd-9.7-aging` | AR and AP ledgers per date, `invoices` + `get_invoice`, `customers` terms, 1510 vs register | already present (E3): Klient AB 148 days, 82 % of open receivables | **built** |
 | 9.8 | Off-balance checklist cross-read against other answers | DD | `dd-9.8-off-balance` | documents, supplier invoices (legal fees imply dispute) | later | later |
 | 9.9 | Owner loan reconciliation vs bank and annual report | DD, auditor | shares `aud-4.3-related-party` | | | 2 |
 | 9.12 | DD answers consistent with later corrections | DD | `dd-9.12-consistency` | cases over time | needs history | later |
@@ -62,10 +62,18 @@ Priority 1 is the Saturday build: six checks, three per persona. Priority 2 if t
 2. `tax-foreign-receipt-local-vat` (from the original spec; not in the catalogue but the most common VAT error)
 3. `aud-1.4-payment-booked-as-cost` shared: the tax reviewer reports the doubled input VAT, the auditor the doubled cost; one case object, two roles
 
+**DD analyst** (`personas/dd-analyst`)
+1. `dd-9.7-aging` (guard: agreed terms, disputes, credit notes in flight, partial payments at remaining amount, register vs 1510 named)
+2. `dd-9.4-arr-backed` (guard: Klient AB by name as the positive case; project revenue in instalments is not ARR and not an error; "inget avtal i arkivet", never a fact about the world)
+3. `dd-9.3-normalisations` (guard: repeats at the same cadence in the prior year are run-rate; every line needs an invoice; capitalised purchases and the transaction's own advisers are not operational one-offs)
+
 **Controls the demo must pass without a finding**
 - Loan to the parent company Konsult Holding AB on 1660: group exemption, no finding.
 - Invoice cluster to Liten Studio HB (2.6): explanation, severity `info`, never `attention`.
 - Depreciation on an asset acquired mid-year: partial-year amount is correct, no finding.
+- Klient AB weekly invoicing (9.4): hour-based lines, paid within terms in 2025; recurring revenue backed by delivery and payment, no finding. Its 2026 arrears are a 9.7 finding, not a 9.4 finding.
+- Berlin GmbH workshops (9.4): varying amounts per workshop, project revenue, no finding.
+- Apple iPad on 1230 (9.3): capitalised asset, not a one-off, no finding.
 
 ## Planted errors, revised (replaces the 2026-09-11 morning proposal)
 
@@ -77,12 +85,15 @@ Priority 1 is the Saturday build: six checks, three per persona. Priority 2 if t
 | P4 | Owner loan in, no interest, no agreement | 2026-01-15: 1930 300 000 D, 2393 300 000 K, text "Lån från aktieägare"; no 84xx interest, no document | 4.3, 9.9 |
 | P5 | Foreign receipt with local VAT deducted | 2026-04-14 supplier invoice Hotel Alexanderplatz GmbH (DE): 5831 5 500 D, 2641 1 045 D, 2440 6 545 K | tax spec |
 | P6 | Struck line without explanation | `correct_entry_lines_inline` on A:87: strike 2641 2 125, add 2641 2 725 and 2440 adjustment, no note | 5.5 |
-| P7 | ARR without contract | Nordic Tech AS: four 2026 invoices 14 000, text "Månadsabonnemang", no `recurring_invoice_schedule`, no agreement document | 9.4 |
+| P7 | ARR without contract | Nordic Tech AS: four 2026 invoices 14 000 (and twelve of 13 000 in 2025), seed item text "Konsulttjänst export: månad N/2026" (the brief says "Månadsabonnemang"; verify in the running demo), no `recurring_invoice_schedule`, no agreement document. dd-9.4 catches it by fixed amount and monthly cadence, not by the word | 9.4 |
 | C1 | Control: group loan | 2026-02-01: 1660 200 000 D, 1930 200 000 K, text "Lån till Konsult Holding AB" | ABL 21 kap 2 § |
 | C2 | Control: invoice cluster | Liten Studio HB: four invoices same day, three credited fourteen days later | 2.6 |
 | E1 | Existing: result disposition missing | 2099 carries 588 561 into 2026, nothing on 2091 | 4.1 |
 | E2 | Existing: depreciation missing | 1230 18 000 since 2026-02-14, no 78xx | 3.3 |
 | E3 | Existing: receivables overdue | 396 875, oldest 148 days, 82 % one customer | 9.7 |
+| P10 | Proposed, not planted: moving cost | supplier invoice 2026-03-20 "Flyttfirma Stockholm AB", "Kontorsflytt Vasagatan", 45 000 + 11 250 VAT, account 6990, one invoice from the supplier in 24 months | 9.3 |
+| P11 | Proposed, not planted: legal fee in a dispute | supplier invoice 2026-05-12 "Advokatfirman Nord AB", "Ombud i tvist med tidigare leverantör", 62 000 + 15 500 VAT, account 6580, no other invoice from the supplier | 9.3 |
+| C5 | Proposed control, not planted: recurring "one-off" | supplier invoices 2025-06-10, 2025-12-10 and 2026-03-10 "Rekryteringsbolaget AB", "Rekryteringsavgift", 30 000 + 7 500 VAT each, account 7690: same cadence in both years, run-rate, must not be on the normalisation list | 9.3 |
 
 Planting script: `scripts/plant-errors.ts`, same posting pattern as Accounted's seed script (draft, lines, posted), P6 through the correction RPC so the log is genuine, idempotent, `--undo` reverses by storno.
 
