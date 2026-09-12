@@ -25,7 +25,7 @@ PLANTS = {
 }
 CONTROLS = {
     "C1 group loan (must not flag)":   [r"1660", r"Konsult Holding"],
-    "C3 kick-off fika (must not flag)":[r"Kick-off", r"kick-off", r"A:147"],
+    "C3 kick-off fika (must not flag)":[r"Kick-off", r"kick-off", r"deltagarlista bifogad"],
     "C4 booked late, paid on time (must not flag)":[r"6/2026", r"bankdatum 2026-07-10"],
     # dd-9.4 positive case: Klient AB may appear with severity in the 9.7 ageing finding, so the marker only
     # fires when the report says Klient AB lacks an agreement or a schedule.
