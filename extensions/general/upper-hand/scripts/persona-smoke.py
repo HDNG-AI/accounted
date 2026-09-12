@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Persona loop v2: persona + its checks loaded from skills/, Staik model, Accounted MCP tools (read-only key).
 
-Usage: python3 scripts/persona-smoke.py [auditor|tax-reviewer] [max_turns]
+Usage: python3 scripts/persona-smoke.py [auditor|tax-reviewer|dd-analyst] [max_turns]
 Env: MODEL (default qwen3.6:35b-a3b), CHECKS (comma list overriding the persona's default checks).
 Reads STAIK_API_KEY and ACCOUNTED_API_KEY from .env in the kit root. Logs one line per turn to stderr.
 
@@ -27,6 +27,7 @@ MAX_RESULT = 8000
 DEFAULT_CHECKS = {
     "auditor": ["aud-9.34-tax-account-late", "aud-1.4-payment-booked-as-cost", "aud-3.3-depreciation-missing", "aud-4.1-result-disposition", "aud-25.13-equity-half"],
     "tax-reviewer": ["tax-4.4-employee-receivable-drift", "tax-foreign-receipt-local-vat", "tax-A1-consumables-private-context"],
+    "dd-analyst": ["dd-9.7-aging", "dd-9.4-arr-backed", "dd-9.3-normalisations"],
 }
 RULES = """
 Hard rules:
