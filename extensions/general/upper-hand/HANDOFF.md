@@ -3,30 +3,22 @@
 Written only when a step is left half-done, on the owner's request. The owner strikes anything unverified before the next session.
 
 ## Task
-DD analyst persona and three checks per `docs/BRIEF-DD-ANALYST.md`, branch `check/dd-analyst`. Files written and self-checked; persona run and scoring not done (no Staik key and no demo instance in the authoring environment).
+DD analyst: persona and three checks written by the DD author (branch `check/dd-analyst`, merged). Runs and scoring done by Erik/Claude on 2026-09-12 against the reset demo company with P7 (Nordic Tech subscription), P10 (moving cost), P11 (legal fee), C5 (recurring recruitment fee) planted.
 
 ## Done and verified
-- `skills/personas/dd-analyst/SKILL.md`: 33 lines (`wc -l`), 5 093 chars without frontmatter.
-- `skills/checks/dd-9.4-arr-backed/SKILL.md` and `skills/checks/dd-9.3-normalisations/SKILL.md` written with the `aud-1.4` headings. `skills/checks/dd-9.7-aging/SKILL.md` given tool names and four extra guard sentences (partial payments at remaining amount, register vs 1510, prior-year payment pattern, stale last invoice).
-- System prompt for dd-analyst plus its three checks plus RULES, assembled the way `persona-smoke.py` builds it: `system_chars=20029` (auditor 10 719 and tax reviewer 12 061 for reference).
-- `scripts/persona-smoke.py`: `dd-analyst` in DEFAULT_CHECKS. `scripts/score-run.py`: marker `P7 ARR without contract` and control `C4 Klient AB recurring` added. `python -m py_compile` on both: OK. `python scripts/score-run.py` on the two 2026-09-12 baseline run logs reproduces the recorded hits (auditor P1, P2, P6, E1, E2; tax reviewer P2, P3, P4, P5, P8) and C4 reads `ok` on both.
-- `docs/agent-learning/specs/CHECKS-MAP.md`: rows 9.3, 9.4, 9.7 updated; DD analyst block and three DD controls added; proposed plants P9, P10 and control C4 added and marked "proposed, not planted".
-- grep: no exclamation marks in the DD files, no intent vocabulary outside the standard "never uses" sentence.
+- Two runs: `docs/agent-learning/runs/2026-09-12-dd-analyst-v1-qwen3.6.md` and `...-v2-...`. Run 2: 20 turns, 44 tool calls, 168 s, one narrated-tool rejection recovered.
+- `dd-9.7-aging`: hit both runs. Concentration 81.6 % on Klient AB, all overdue, severity blocking, closing action with owner and date. gemma4 control: godkänt, language gate OK.
+- Controls silent both runs: C1, C3, C4, C5 (recruitment fee correctly read as run-rate), C6 (Klient AB correctly read as hourly billing, not unbacked ARR).
+- `dd-9.4-arr-backed`: miss. The model found Nordic Tech's "Månadsabonnemang analysplattform" but rejected it because it fetched only one 2026 invoice plus two 2025 ones and concluded "amounts vary, not 3+ consecutive". Four consecutive 2026 invoices at 14 000 kr exist (F-20260027 to F-20260030).
+- `dd-9.3-normalisations`: miss. `accounted_list_supplier_invoices` with `date_from 2024-01-01` returned 17 rows, all 2025 (tool page limit); the 2026 invoices from Flyttfirma Stockholm AB and Advokatfirman Nord AB were never seen.
+- Model wrote "396 857 kr" for 396 875 kr once; the control pass cannot catch digit swaps without the source figures.
 
 ## Not done
-- No persona run, so no `docs/agent-learning/runs/YYYY-MM-DD-dd-analyst-<model>.md`. Nothing fabricated.
-- P9, P10 and control C4 for dd-9.3 are proposals in CHECKS-MAP, not in `plant-errors.ts`.
-- No PR: the authoring account has read access only to HDNG-AI/accounted.
+- Guards that would have turned the two misses into hits (see next step).
 
 ## Next step (exactly one)
-From `extensions/general/upper-hand` with `.env` filled, after `reset-demo.sh`:
-`set -a && source .env && set +a && python3 scripts/persona-smoke.py dd-analyst 20 > /tmp/dd.out 2> /tmp/dd.err && python3 scripts/score-run.py /tmp/dd.out`
-Expected: HIT on E3 and P7, `ok` on C1, C3 and C4, no wording violation. Paste scorer output, turn log and the unedited reply into `docs/agent-learning/runs/<date>-dd-analyst-qwen3.6.md`.
+Add two data-completeness guards and rerun: in `dd-9.4-arr-backed`, "list every invoice for the customer for the last 12 months before judging cadence; a price change between years does not break recurrence"; in `dd-9.3-normalisations`, "query supplier invoices per year, newest year first, and paginate until the returned count is below the page size; state the population checked". Verify with `python3 scripts/persona-smoke.py dd-analyst 20` and `python3 scripts/score-run.py`: P7, P10, P11 hit, C5 and C6 still silent.
 
 ## Gotchas
-- The seed's Nordic Tech AS item text is "Konsulttjänst export: månad N/2026", not "Månadsabonnemang" as the brief says. dd-9.4 catches the series by fixed amount and monthly cadence, so it works with either text; check the running demo before trusting either.
-- The seed creates no recurring schedules, so Klient AB has none. The Klient AB guard in dd-9.4 rests on the hour-based invoice lines (24 h at 1 200 kr) and the 2025 payment history, not on a schedule.
-- `accounted_list_recurring_schedules` has catalogVisibility 'search' and is absent from tools/list. The check tells the model to reach it via `accounted_search_tools` or `accounted_call_tool`; watch the first run for the model failing to find it.
-- Customer invoicing in the seed ends 2026-05-04 for every customer. Both DD checks tell the model to state the last invoiced month rather than read the stop as churn; tighten that guard if the model still reports churn.
-- `accounted_list_invoices` returns no items, paid amounts or remaining amounts; `accounted_get_invoice` does. The auditor baseline showed 1510 at 450 875 while the register's open total is 396 875; dd-9.7 now names the register as the ageing basis and hands the difference to aud-1.3.
-- dd-9.3 on the current demo should end in "Ingen avvikelse" with the population checked. That is the intended control result, not a miss.
+- Tool results are capped (page limits, 8 000 chars); a check that depends on a full population must say how to fetch it.
+- The scorer's C-controls only fire when a control name appears near a severity word; read the report when in doubt.
