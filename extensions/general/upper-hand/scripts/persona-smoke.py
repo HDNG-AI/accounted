@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Persona loop v2: persona + its checks loaded from skills/, Staik model, Accounted MCP tools (read-only key).
+"""Persona loop v2: persona + its checks loaded from skills/, model via model_client (route class "analysis"), Accounted MCP tools (read-only key).
 
 Usage: python3 scripts/persona-smoke.py [auditor|tax-reviewer|dd-analyst] [max_turns]
-Env: MODEL (default qwen3.6:35b-a3b), CHECKS (comma list overriding the persona's default checks).
-Reads STAIK_API_KEY and ACCOUNTED_API_KEY from .env in the kit root. Logs one line per turn to stderr.
+Env: CHECKS (comma list overriding the persona's default checks); model routing per scripts/model_client.py
+(HDNG_MODEL_GATEWAY_URL, HDNG_APP_TOKEN, HDNG_ROUTE_ANALYSIS, HDNG_ROUTE_CONTROL; legacy MODEL/CONTROL_MODEL/STAIK_API_KEY still work).
+Reads .env in the kit root for ACCOUNTED_API_KEY and the model variables. Logs one line per turn to stderr.
 
 Guards (from the 2026-09-11 runs):
 - tool_choice "required" until the model has made at least two real tool calls;
@@ -13,18 +14,20 @@ Guards (from the 2026-09-11 runs):
 Spike quality: stdlib only, no compaction. The real thing lives in the extension.
 """
 import json, os, re, sys, time, urllib.request, urllib.error, subprocess
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import model_client
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 for line in open(os.path.join(ROOT, ".env")):
     if "=" in line and not line.startswith("#"):
         k, v = line.strip().split("=", 1); os.environ.setdefault(k, v)
 
-STAIK = os.environ["STAIK_API_KEY"]; ACC = os.environ["ACCOUNTED_API_KEY"]
-MODEL = os.environ.get("MODEL", "qwen3.6:35b-a3b")
+ACC = os.environ["ACCOUNTED_API_KEY"]
+MODEL = model_client.resolve("analysis")
 MCP = os.environ.get("ACCOUNTED_MCP_URL", "http://localhost:3001/api/extensions/ext/mcp-server/mcp?tool_namespace=accounted")
 MAX_RESULT = 8000
 ACCOUNTED_ROOT = os.environ.get("ACCOUNTED_ROOT", os.path.expanduser("~/dev/accounted"))
-CONTROL_MODEL = os.environ.get("CONTROL_MODEL", "gemma4:31b")
+CONTROL_MODEL = model_client.resolve("control")
 
 def record_run(*args):
     """Best effort: tell the panel a run started or finished. Never fails the run."""
@@ -65,21 +68,7 @@ def mcp(method, params):
     with urllib.request.urlopen(req, timeout=120) as r: return json.loads(r.read())
 
 def chat(messages, tools, tool_choice):
-    body = {"model": MODEL, "messages": messages, "tools": tools, "tool_choice": tool_choice, "stream": False, "max_tokens": 4096}
-    last = None
-    for attempt in range(1, 7):
-        req = urllib.request.Request("https://api.staik.se/v1/chat/completions", data=json.dumps(body).encode(),
-            headers={"Authorization": f"Bearer {STAIK}", "Content-Type": "application/json"})
-        try:
-            with urllib.request.urlopen(req, timeout=150) as r: return json.loads(r.read())
-        except urllib.error.HTTPError as e:
-            last = e
-            if e.code == 429:  # per-key rate limit (5M tokens/hour on coder_pro): back off hard, do not hammer
-                wait = min(60 * attempt, 300); print(f"[retry {attempt}] 429 rate limited, waiting {wait}s", file=sys.stderr); time.sleep(wait); continue
-            print(f"[retry {attempt}] HTTP {e.code}", file=sys.stderr); time.sleep(5 * attempt)
-        except Exception as e:  # 2026-09-11: Staik stalled 300 s on two parallel ~30k-token requests, then recovered
-            last = e; print(f"[retry {attempt}] {type(e).__name__}: {e}", file=sys.stderr); time.sleep(5 * attempt)
-    raise last
+    return model_client.chat("analysis", messages, tools=tools, tool_choice=tool_choice, max_tokens=4096, timeout=150)
 
 def looks_like_fake_tools(text):
     if not text: return False
@@ -93,8 +82,8 @@ def main():
     raw = mcp("tools/list", {})["result"]["tools"]
     tools = [{"type":"function","function":{"name":t["name"],"description":t.get("description","")[:280],"parameters":t.get("inputSchema",{"type":"object","properties":{}})}} for t in raw]
     print(f"[setup] model={MODEL} persona={persona} checks={checks} tools={len(tools)} system_chars={len(system)}", file=sys.stderr)
-    run_id = record_run("start", persona, ",".join(checks), MODEL, CONTROL_MODEL)
-    if run_id: print(f"[run] registered {run_id}", file=sys.stderr)
+    run_id = record_run("start", persona, ",".join(checks), MODEL, CONTROL_MODEL, model_client.provider_label())
+    if run_id: print(f"[run] registered {run_id}", file=sys.stderr); os.environ["UH_RUN_ID"] = run_id
     messages = [{"role":"system","content":system},
                 {"role":"user","content":f"Review the company Konsult AB (the default company for this key). Run your checks in order and report in {LANG_NAME}."}]
     totals = {"prompt":0,"completion":0,"tool_calls":0,"errors":0,"rejections":0}
@@ -145,6 +134,6 @@ def main():
             except json.JSONDecodeError: print("[cases] JSON block did not parse", file=sys.stderr)
         findings = len(cases) or (len(re.findall(r"(?im)^\**\s*(severity|allvar)\b", final or "")) or None)
         print(f"[cases] {len(cases)} structured findings", file=sys.stderr)
-        record_run("finish", run_id, json.dumps({"turns": turn, "tool_calls": totals["tool_calls"], "findings": findings, "status": "done", "cases": cases}, ensure_ascii=False))
+        record_run("finish", run_id, json.dumps({"turns": turn, "tool_calls": totals["tool_calls"], "findings": findings, "status": "done", "cases": cases, "usage": model_client.USAGE}, ensure_ascii=False))
 
 if __name__ == "__main__": main()

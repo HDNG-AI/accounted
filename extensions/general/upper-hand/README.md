@@ -55,6 +55,10 @@ npm run dev                 # http://localhost:3000
 
 Status för detta står längst ned.
 
+## Modellval: route-klass, inte leverantör
+
+Loopen och kontrollsteget ber om en route-klass (`analysis`, `control`) via `scripts/model_client.py`, aldrig om en leverantör. I dag löser modulen klassen mot Staik (qwen3.6 för analys, gemma4 för kontroll) i "shim-läge". När HDNG Core-gatewayen finns byts bara miljövariablerna (`HDNG_MODEL_GATEWAY_URL`, `HDNG_APP_TOKEN`), och kundens instanspolicy avgör modellerna. Samma kontrakt som hdng-sales-agent, se `hdng-sales-agent/docs/APP-ARCHITECTURE.md`. Manifestets `hdng`-block är AppDefinition-fälten. Varje modellanrop loggas som ett usage event (`[usage] {...}` på stderr och `usage` på körningen i panelen). Test: `python3 -m unittest extensions/general/upper-hand/scripts/test_model_client.py`.
+
 ## Köra OpenCode mot Staik
 
 Nyckeln ligger i `.env` (gitignorad). OpenCode läser den via `{env:STAIK_API_KEY}` i `opencode.json`, så exportera den innan start:

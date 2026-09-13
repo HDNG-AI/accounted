@@ -5,12 +5,33 @@ export const RUN_KEY_PREFIX = 'run:'
 
 export type UpperHandRunStatus = 'running' | 'done' | 'failed'
 
+/** One model or tool call, the common HDNG usage-event shape (hdng-sales-agent/docs/APP-ARCHITECTURE.md section 5). */
+export interface UpperHandUsageEvent {
+  app_id: string
+  installation_id: string | null
+  run_id: string | null
+  trace_id: string | null
+  kind: 'model' | 'tool' | 'send'
+  route_class: string
+  provider: string
+  model: string
+  prompt_tokens: number | null
+  completion_tokens: number | null
+  duration_ms: number
+  cost_estimate: number | null
+  at: string
+}
+
 export interface UpperHandRun {
   run_id: string
   persona: string
   checks: string[]
   model: string
   control_model: string | null
+  /** Provider label as reported by the model client; null on runs recorded before it existed. */
+  provider?: string | null
+  /** Usage events collected during the run; absent on older runs. */
+  usage?: UpperHandUsageEvent[] | null
   started_at: string
   finished_at: string | null
   status: UpperHandRunStatus
