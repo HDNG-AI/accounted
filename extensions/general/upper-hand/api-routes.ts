@@ -11,7 +11,7 @@ import {
 } from './lib/case-store'
 import { recheckCase } from './lib/recheck'
 import type { UpperHandCase } from './lib/case-types'
-import { isLive, listRuns } from './lib/run-store'
+import { isLive, listRuns, type UpperHandRun } from './lib/run-store'
 import { listPersonas, type PanelStatus } from './lib/panel-status'
 
 const acknowledgeSchema = z
@@ -197,6 +197,19 @@ async function handleRerun(
   return NextResponse.json({ data: { case: updated, outcome } })
 }
 
+/**
+ * The panel shows what actually ran, not a hard-coded provider: the latest run's models and provider label.
+ * Before any run, fall back to the route defaults from scripts/model_client.py.
+ */
+export function modelsFromRuns(runs: UpperHandRun[]): PanelStatus['models'] {
+  const last = runs[0] ?? null
+  return {
+    analysis: last?.model ?? 'qwen3.6:35b-a3b',
+    control: last?.control_model ?? 'gemma4:31b',
+    provider: last?.provider ?? process.env.HDNG_PROVIDER_LABEL ?? 'Staik · SE',
+  }
+}
+
 async function handleStatus(_request: Request, ctx?: ExtensionContext): Promise<Response> {
   if (!ctx) return errorResponse('NO_CONTEXT', 'Extension context is missing.', 500)
   const runs = await listRuns(ctx.supabase, ctx.companyId)
@@ -207,7 +220,7 @@ async function handleStatus(_request: Request, ctx?: ExtensionContext): Promise<
   const status: PanelStatus = {
     personas,
     live: personas.some((p) => p.live),
-    models: { analysis: 'qwen3.6:35b-a3b', control: 'gemma4:31b', provider: 'Staik · SE' },
+    models: modelsFromRuns(runs),
     access: 'Read-only key: no write tools exposed',
     generated_at: new Date().toISOString(),
   }

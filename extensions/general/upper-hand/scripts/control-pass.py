@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Control and language pass (gemma4 by default) over an analysis report from the persona loop.
+"""Control and language pass (route class "control", gemma4 by default) over an analysis report from the persona loop.
 
 Usage: python3 scripts/control-pass.py <report.txt> [--json]
-Env: CONTROL_MODEL (default gemma4:31b), STAIK_API_KEY from .env.
+Env: model routing per scripts/model_client.py (HDNG_ROUTE_CONTROL, legacy CONTROL_MODEL; HDNG_APP_TOKEN or STAIK_API_KEY) from .env.
 
 One model call with a strict output contract:
 1. Splits the analysis into findings and checks each for evidence ids (voucher numbers or ids, document ids),
@@ -12,14 +12,15 @@ One model call with a strict output contract:
 Then a deterministic gate: only Latin script, no English filler, no intent words, no exclamation marks.
 Exit code 2 if the gate fails, so a pipeline stops before anything reaches a user.
 """
-import json, os, re, sys, urllib.request
+import json, os, re, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import model_client
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 for line in open(os.path.join(ROOT, ".env")):
     if "=" in line and not line.startswith("#"):
         k, v = line.strip().split("=", 1); os.environ.setdefault(k, v)
-STAIK = os.environ["STAIK_API_KEY"]
-MODEL = os.environ.get("CONTROL_MODEL", "gemma4:31b")
+MODEL = model_client.resolve("control")
 OUTPUT_LANG = os.environ.get("OUTPUT_LANG", "en")
 LANG_NAME = {"en": "English", "sv": "Swedish"}.get(OUTPUT_LANG, "English")
 
@@ -36,10 +37,7 @@ Return ONLY this JSON, nothing else:
  "rapport_sv":"...markdown in {LANG}, one section per approved or downgraded finding, then a section on what could not be verified..."}"""
 
 def chat(messages):
-    body = {"model": MODEL, "messages": messages, "stream": False, "max_tokens": 6000, "temperature": 0.1}
-    req = urllib.request.Request("https://api.staik.se/v1/chat/completions", data=json.dumps(body).encode(),
-        headers={"Authorization": f"Bearer {STAIK}", "Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=240) as r: return json.loads(r.read())
+    return model_client.chat("control", messages, max_tokens=6000, temperature=0.1, timeout=240, attempts=1)
 
 ALLOWED = re.compile(r"[\x09\x0A\x0D\x20-\x7E -ɏ‐-‧‰-⁞€→≤≥×…]")
 def gate(text):

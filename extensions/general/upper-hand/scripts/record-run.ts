@@ -1,9 +1,9 @@
 /**
  * Record a reviewer run so the panel can show what is live and what ran last.
  *
- *   npx tsx extensions/general/upper-hand/scripts/record-run.ts start <persona> <check1,check2> <model> [control_model]
+ *   npx tsx extensions/general/upper-hand/scripts/record-run.ts start <persona> <check1,check2> <model> [control_model] [provider]
  *     -> prints the run_id
- *   npx tsx extensions/general/upper-hand/scripts/record-run.ts finish <run_id> '<json: {turns, tool_calls, findings, controls_ok, gate_ok, status}>'
+ *   npx tsx extensions/general/upper-hand/scripts/record-run.ts finish <run_id> '<json: {turns, tool_calls, findings, controls_ok, gate_ok, status, cases?, usage?}>'
  *
  * Writes to extension_data (key run:<id>) for the owner's active company, service role, like seed-cases.ts.
  */
@@ -72,9 +72,9 @@ async function main() {
   const [cmd, ...rest] = process.argv.slice(2)
   const { userId, companyId } = await context()
   if (cmd === 'start') {
-    const [persona, checks, model, control] = rest
+    const [persona, checks, model, control, provider] = rest
     const run: UpperHandRun = {
-      run_id: randomUUID(), persona, checks: (checks ?? '').split(',').filter(Boolean), model: model ?? 'unknown', control_model: control ?? null,
+      run_id: randomUUID(), persona, checks: (checks ?? '').split(',').filter(Boolean), model: model ?? 'unknown', control_model: control ?? null, provider: provider ?? null, usage: null,
       started_at: new Date().toISOString(), finished_at: null, status: 'running',
       turns: null, tool_calls: null, findings: null, controls_ok: null, gate_ok: null,
     }
@@ -100,6 +100,6 @@ async function main() {
     process.stdout.write(`ok cases=${created}\n`)
     return
   }
-  throw new Error('usage: record-run.ts start <persona> <checks> <model> [control] | finish <run_id> <json>')
+  throw new Error('usage: record-run.ts start <persona> <checks> <model> [control] [provider] | finish <run_id> <json>')
 }
 main().catch((e) => { console.error('FATAL', e.message ?? e); process.exit(1) })
