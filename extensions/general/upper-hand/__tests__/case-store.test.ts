@@ -48,7 +48,7 @@ describe('applyTransition', () => {
     expect(updated.what_closes_it.owner).toBe('Anna')
     expect(updated.needs_recheck).toBe(false)
     expect(updated.history).toHaveLength(2)
-    expect(updated.history[1].action).toBe('Ansvarig satt')
+    expect(updated.history[1].action).toBe('Owner set')
   })
 
   it('requires an owner or due date to acknowledge', () => {
@@ -108,7 +108,7 @@ describe('applyTransition', () => {
     })
     const reopened = applyTransition(closed, 'reopened', { actor: 'user-1' })
     expect(reopened.status).toBe('reopened')
-    expect(reopened.history.at(-1)?.action).toBe('Återöppnat')
+    expect(reopened.history.at(-1)?.action).toBe('Reopened')
   })
 
   it('is a no-op when the status does not change', () => {
@@ -123,7 +123,7 @@ describe('buildCase', () => {
     expect(created.status).toBe('open')
     expect(created.needs_recheck).toBe(false)
     expect(created.history).toHaveLength(1)
-    expect(created.history[0].action).toBe('Ärende öppnat')
+    expect(created.history[0].action).toBe('Case opened')
   })
 })
 
